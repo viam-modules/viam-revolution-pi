@@ -30,6 +30,7 @@ type revolutionPiBoard struct {
 	AnalogReaders []string
 	GPIONames     []string
 
+	controlChip             *gpioChip
 	cancelCtx               context.Context
 	cancelFunc              func()
 	activeBackgroundWorkers sync.WaitGroup
@@ -50,6 +51,14 @@ func newBoard(
 	logger golog.Logger,
 ) (board.Board, error) {
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
+
+	devPath := filepath.Join("/dev", "piControl0")
+	fd, err := unix.Open(devPath, unix.O_RDONLY, 0)
+	if err != nil {
+		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
+		return nil, err
+	}
+	gpioChip := gpioChip{handle: fd, dev: devPath}
 	b := revolutionPiBoard{
 		Named:         conf.ResourceName().AsNamed(),
 		logger:        logger,
@@ -59,6 +68,7 @@ func newBoard(
 		I2Cs:          []string{},
 		AnalogReaders: []string{},
 		GPIONames:     []string{},
+		controlChip:   &gpioChip,
 	}
 
 	if err := b.Reconfigure(ctx, nil, conf); err != nil {
@@ -119,22 +129,7 @@ func (b *revolutionPiBoard) GPIOPinNames() []string {
 }
 
 func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error) {
-	devPath := filepath.Join("/dev", "piControl0")
-	fd, err := unix.Open(devPath, unix.O_RDONLY, 0)
-	if err != nil {
-		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
-		return nil, err
-	}
-
-	return &revolutionPiGpioPin{}, nil
-}
-
-func ioCtl(handle int, request uintptr, a uintptr) error {
-	_, _, err := unix.Syscall(unix.SYS_IOCTL, uintptr(handle), request, a)
-	if err != 0 {
-		return err
-	}
-	return nil
+	return b.controlChip.GetBinaryIOPin(pinName)
 }
 
 func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
