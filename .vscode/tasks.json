@@ -1,0 +1,88 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "go",
+			"label": "compile",
+			"command": "build",
+			"args": [
+				"-o",
+				"${workspaceFolderBasename}-${input:bulidOs}-${input:buildArch}"
+			],
+			"problemMatcher": [
+				"$go"
+			],
+			"group": "build",
+			"detail": "go build ./...",
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"GOARCH": "${input:buildArch}",
+					"GOOS": "${input:bulidOs}"
+				}
+			}
+		},
+		{
+			"type": "process",
+			"label": "deploy",
+			"command": "scp",
+			"args": [
+				"./${workspaceFolderBasename}-${input:bulidOs}-${input:buildArch}",
+				"pi@revpi88384:~"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}",
+			},
+			"dependsOn": "stopviam"
+		},
+		{
+			"type": "process",
+			"label": "stopviam",
+			"command": "ssh",
+			"args": [
+				"pi@revpi88384",
+				"sudo",
+				"systemctl",
+				"stop",
+				"viam-server"
+			],
+			"dependsOn": "compile"
+		},
+		{
+			"type": "process",
+			"isBuildCommand": true,
+			"label": "build",
+			"command": "ssh",
+			"args": [
+				"pi@revpi88384",
+				"sudo",
+				"systemctl",
+				"start",
+				"viam-server"
+			],
+			"dependsOn": "deploy"
+		}
+	],
+	"inputs": [
+		{
+			"type": "pickString",
+			"id": "buildArch",
+			"description": "Which architecture do you want to build for?",
+			"options": [
+				"amd64",
+				"arm64"
+			],
+			"default": "arm64"
+		},
+		{
+			"type": "pickString",
+			"id": "bulidOs",
+			"description": "Which OS do you want to build for?",
+			"options": [
+				"linux",
+				"windows"
+			],
+			"default": "linux"
+		}
+	]
+}

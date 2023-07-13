@@ -1,0 +1,15 @@
+{
+    "cmake.configureOnOpen": false,
+    "gopls": {
+        "ui.semanticTokens": true
+    },
+    "[go]":{
+        "editor.insertSpaces": false,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        },
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "editor.defaultFormatter": "golang.go"
+    }
+}
