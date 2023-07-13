@@ -6,6 +6,8 @@ package revolution_pi
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -16,10 +18,9 @@ import (
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/grpc"
 	"go.viam.com/rdk/resource"
-	"golang.org/x/sys/unix"
 )
 
-const ModelName = "RevolutionPi"
+var Model = resource.NewModel("thegreatco", "board", "RevolutionPi")
 
 type revolutionPiBoard struct {
 	resource.Named
@@ -36,11 +37,10 @@ type revolutionPiBoard struct {
 	activeBackgroundWorkers sync.WaitGroup
 }
 
-// RegisterBoard registers a sysfs based board of the given model.
 func init() {
 	resource.RegisterComponent(
 		board.API,
-		resource.DefaultModelFamily.WithModel(ModelName),
+		Model,
 		resource.Registration[board.Board, *Config]{Constructor: newBoard})
 }
 
@@ -53,12 +53,12 @@ func newBoard(
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
 	devPath := filepath.Join("/dev", "piControl0")
-	fd, err := unix.Open(devPath, unix.O_RDONLY, 0)
+	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return nil, err
 	}
-	gpioChip := gpioChip{handle: fd, dev: devPath}
+	gpioChip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
 	b := revolutionPiBoard{
 		Named:         conf.ResourceName().AsNamed(),
 		logger:        logger,

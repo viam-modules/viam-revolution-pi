@@ -40,3 +40,9 @@ type SPIValue struct {
 	i8uBit      uint8  // 0-7 bit position, >= 8 whole byte
 	i8uValue    uint8  // Value: 0/1 for bit access, whole byte otherwise
 }
+
+type PwmStateRequest struct {
+	i16uAddress uint16 // Address of the byte in the process image
+	i8uBit      uint8  // 0-7 bit position, >= 8 whole byte
+	i8uValue    uint16 // Value: 0/1 for bit access, whole byte otherwise
+}

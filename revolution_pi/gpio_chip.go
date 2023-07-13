@@ -4,14 +4,18 @@ package revolution_pi
 
 import (
 	"fmt"
+	"os"
+	"syscall"
 	"unsafe"
 
+	"github.com/edaniels/golog"
 	"golang.org/x/sys/unix"
 )
 
 type gpioChip struct {
-	handle int
-	dev    string
+	dev        string
+	logger     golog.Logger
+	fileHandle *os.File
 }
 
 func (b *gpioChip) GetBinaryIOPin(pinName string) (*gpioPin, error) {
@@ -20,19 +24,23 @@ func (b *gpioChip) GetBinaryIOPin(pinName string) (*gpioPin, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength}, nil
+	b.logger.Debugf("Found pin address: %#v", pin)
+	return &gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: b}, nil
 }
 
 func (b *gpioChip) mapNameToAddress(pin *SPIVariable) error {
-	err := b.ioCtl(uintptr(KB_FIND_VARIABLE), uintptr(unsafe.Pointer(&pin)))
-	if err != nil {
+	b.logger.Debugf("Looking for address of %#v", pin)
+	err := b.ioCtl(uintptr(KB_FIND_VARIABLE), unsafe.Pointer(pin))
+	if err != 0 {
 		e := fmt.Errorf("failed to get pin address info %v failed: %w", b.dev, err)
 		return e
 	}
 	return nil
 }
 
-func (b *gpioChip) ioCtl(command uintptr, message uintptr) error {
-	_, _, err := unix.Syscall(unix.SYS_IOCTL, uintptr(b.handle), command, message)
+func (b *gpioChip) ioCtl(command uintptr, message unsafe.Pointer) syscall.Errno {
+	handle := b.fileHandle.Fd()
+	b.logger.Debugf("Handle: %#v, Command: %#v, Message: %#V", handle, command, message)
+	_, _, err := unix.Syscall(unix.SYS_IOCTL, handle, command, uintptr(message))
 	return err
 }

@@ -6,13 +6,10 @@ import (
 	"github.com/edaniels/golog"
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/module"
-	"go.viam.com/rdk/resource"
 	"go.viam.com/utils"
 
 	"thegreatco/viam-revolution-pi/revolution_pi"
 )
-
-var model = resource.NewModel("viamlabs", "board", revolution_pi.ModelName)
 
 func main() {
 	utils.ContextualMain(mainWithArgs, module.NewLoggerFromArgs("revolution_pi"))
@@ -24,7 +21,7 @@ func mainWithArgs(ctx context.Context, args []string, logger golog.Logger) (err 
 		return err
 	}
 
-	err = custom_module.AddModelFromRegistry(ctx, board.API, model)
+	err = custom_module.AddModelFromRegistry(ctx, board.API, revolution_pi.Model)
 	if err != nil {
 		return err
 	}
