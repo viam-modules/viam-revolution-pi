@@ -107,6 +107,7 @@ func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader,
 		b.logger.Error(err)
 		return nil, false
 	}
+	b.logger.Infof("Analog Reader: %#v", reader)
 	return reader, true
 }
 

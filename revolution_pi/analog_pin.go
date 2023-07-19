@@ -12,7 +12,6 @@ import (
 type analogPin struct {
 	Name        string // Variable name
 	Address     uint16 // Address of the byte in the process image
-	BitPosition uint8  // 0-7 bit position, >= 8 whole byte
 	Length      uint16 // length of the variable in bits. Possible values are 1, 8, 16 and 32
 	ControlChip *gpioChip
 }
@@ -33,5 +32,6 @@ func (pin *analogPin) Read(ctx context.Context, extra map[string]interface{}) (i
 }
 
 func (pin *analogPin) Close(ctx context.Context) error {
+	// There is nothing to close with respect to individual analog _reader_ pins
 	return nil
 }

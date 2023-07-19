@@ -24,35 +24,36 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	if err != nil {
 		return nil, err
 	}
-	g.logger.Debugf("Found pin address: %#v", pin)
+	g.logger.Infof("Found pin: %#v", pin)
 	gpioPin := gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
 	gpioPin.initialize()
 	return &gpioPin, nil
 }
 
+func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
+	pin := SPIVariable{strVarName: Char32(pinName)}
+	err := g.mapNameToAddress(&pin)
+	if err != nil {
+		return nil, err
+	}
+	g.logger.Infof("Found pin: %#v", pin)
+	return &analogPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
+}
+
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
-	g.logger.Debugf("Looking for address of %#v", pin)
+	g.logger.Infof("Looking for address of %#v", pin)
 	err := g.ioCtl(uintptr(KB_FIND_VARIABLE), unsafe.Pointer(pin))
 	if err != 0 {
 		e := fmt.Errorf("failed to get pin address info %v failed: %w", g.dev, err)
 		return e
 	}
+	g.logger.Infof("Found address of %#v", pin)
 	return nil
-}
-
-func (b *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
-	pin := SPIVariable{strVarName: Char32(pinName)}
-	err := b.mapNameToAddress(&pin)
-	if err != nil {
-		return nil, err
-	}
-	b.logger.Infof("Found pin address: %#v", pin)
-	return &analogPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength}, nil
 }
 
 func (g *gpioChip) ioCtl(command uintptr, message unsafe.Pointer) syscall.Errno {
 	handle := g.fileHandle.Fd()
-	g.logger.Debugf("Handle: %#v, Command: %#v, Message: %#V", handle, command, message)
+	g.logger.Infof("Handle: %#v, Command: %#v, Message: %#v", handle, command, message)
 	_, _, err := unix.Syscall(unix.SYS_IOCTL, handle, command, uintptr(message))
 	return err
 }
