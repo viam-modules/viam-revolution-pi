@@ -17,10 +17,10 @@ type analogPin struct {
 }
 
 func (pin *analogPin) Read(ctx context.Context, extra map[string]interface{}) (int, error) {
-	pin.ControlChip.logger.Infof("Reading from %v, length: %v byte(s)", pin.Address, pin.Length/8)
+	pin.ControlChip.logger.Debugf("Reading from %v, length: %v byte(s)", pin.Address, pin.Length/8)
 	b := make([]byte, pin.Length/8)
 	n, err := pin.ControlChip.fileHandle.ReadAt(b, int64(pin.Address))
-	pin.ControlChip.logger.Infof("Read %#v bytes", b)
+	pin.ControlChip.logger.Debugf("Read %#v bytes", b)
 	if n != 2 {
 		return 0, fmt.Errorf("expected 2 bytes, got %#v", b)
 	}

@@ -24,7 +24,7 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	if err != nil {
 		return nil, err
 	}
-	g.logger.Infof("Found pin: %#v", pin)
+	g.logger.Debugf("Found GPIO pin: %#v", pin)
 	gpioPin := gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
 	gpioPin.initialize()
 	return &gpioPin, nil
@@ -36,24 +36,24 @@ func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
 	if err != nil {
 		return nil, err
 	}
-	g.logger.Infof("Found pin: %#v", pin)
+	g.logger.Debugf("Found Analog pin: %#v", pin)
 	return &analogPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
-	g.logger.Infof("Looking for address of %#v", pin)
+	g.logger.Debugf("Looking for address of %#v", pin)
 	err := g.ioCtl(uintptr(KB_FIND_VARIABLE), unsafe.Pointer(pin))
 	if err != 0 {
 		e := fmt.Errorf("failed to get pin address info %v failed: %w", g.dev, err)
 		return e
 	}
-	g.logger.Infof("Found address of %#v", pin)
+	g.logger.Debugf("Found address of %#v", pin)
 	return nil
 }
 
 func (g *gpioChip) ioCtl(command uintptr, message unsafe.Pointer) syscall.Errno {
 	handle := g.fileHandle.Fd()
-	g.logger.Infof("Handle: %#v, Command: %#v, Message: %#v", handle, command, message)
+	g.logger.Debugf("Handle: %#v, Command: %#v, Message: %#v", handle, command, message)
 	_, _, err := unix.Syscall(unix.SYS_IOCTL, handle, command, uintptr(message))
 	return err
 }
@@ -76,9 +76,9 @@ func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
 }
 
 func (g *gpioChip) writeValue(address int64, b []byte) error {
-	g.logger.Infof("Writing %#v to %v", b, address)
+	g.logger.Debugf("Writing %#v to %v", b, address)
 	n, err := g.fileHandle.WriteAt(b, address)
-	g.logger.Infof("Wrote %#v byte(s), n: %v", b, n)
+	g.logger.Debugf("Wrote %#v byte(s), n: %v", b, n)
 	if err != nil {
 		return err
 	}
