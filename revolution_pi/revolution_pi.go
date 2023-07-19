@@ -129,7 +129,7 @@ func (b *revolutionPiBoard) GPIOPinNames() []string {
 }
 
 func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error) {
-	return b.controlChip.GetBinaryIOPin(pinName)
+	return b.controlChip.GetGpioPinByName(pinName)
 }
 
 func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
@@ -146,8 +146,14 @@ func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode,
 
 func (b *revolutionPiBoard) Close(ctx context.Context) error {
 	b.mu.Lock()
+	b.logger.Info("Closing RevPi board.")
+	defer b.mu.Unlock()
 	b.cancelFunc()
-	b.mu.Unlock()
+	err := b.controlChip.Close()
+	if err != nil {
+		return err
+	}
 	b.activeBackgroundWorkers.Wait()
+	b.logger.Info("Board closed.")
 	return nil
 }
