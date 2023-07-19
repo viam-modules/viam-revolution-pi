@@ -52,6 +52,7 @@ func newBoard(
 ) (board.Board, error) {
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
+	logger.Info("Starting RevolutionPi Driver v0.1")
 	devPath := filepath.Join("/dev", "piControl0")
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
@@ -101,7 +102,12 @@ func (b *revolutionPiBoard) I2CByName(name string) (board.I2C, bool) {
 }
 
 func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
-	return nil, false
+	reader, err := b.controlChip.GetAnalogInput(name)
+	if err != nil {
+		b.logger.Error(err)
+		return nil, false
+	}
+	return reader, true
 }
 
 func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
@@ -117,7 +123,7 @@ func (b *revolutionPiBoard) I2CNames() []string {
 }
 
 func (b *revolutionPiBoard) AnalogReaderNames() []string {
-	return b.AnalogReaders
+	return nil
 }
 
 func (b *revolutionPiBoard) DigitalInterruptNames() []string {
@@ -125,11 +131,11 @@ func (b *revolutionPiBoard) DigitalInterruptNames() []string {
 }
 
 func (b *revolutionPiBoard) GPIOPinNames() []string {
-	return b.GPIONames
+	return nil
 }
 
 func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error) {
-	return b.controlChip.GetBinaryIOPin(pinName)
+	return b.controlChip.GetGPIOPin(pinName)
 }
 
 func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
