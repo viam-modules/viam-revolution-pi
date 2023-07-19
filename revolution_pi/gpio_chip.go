@@ -18,7 +18,7 @@ type gpioChip struct {
 	fileHandle *os.File
 }
 
-func (g *gpioChip) GetGpioPinByName(pinName string) (*gpioPin, error) {
+func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	pin := SPIVariable{strVarName: Char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
@@ -38,6 +38,16 @@ func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 		return e
 	}
 	return nil
+}
+
+func (b *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
+	pin := SPIVariable{strVarName: Char32(pinName)}
+	err := b.mapNameToAddress(&pin)
+	if err != nil {
+		return nil, err
+	}
+	b.logger.Infof("Found pin address: %#v", pin)
+	return &analogPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength}, nil
 }
 
 func (g *gpioChip) ioCtl(command uintptr, message unsafe.Pointer) syscall.Errno {
