@@ -50,7 +50,6 @@ func newBoard(
 	conf resource.Config,
 	logger golog.Logger,
 ) (board.Board, error) {
-	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
 	logger.Info("Starting RevolutionPi Driver v0.1")
 	devPath := filepath.Join("/dev", "piControl0")
@@ -59,6 +58,7 @@ func newBoard(
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return nil, err
 	}
+	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 	gpioChip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
 	b := revolutionPiBoard{
 		Named:         conf.ResourceName().AsNamed(),
@@ -70,6 +70,7 @@ func newBoard(
 		AnalogReaders: []string{},
 		GPIONames:     []string{},
 		controlChip:   &gpioChip,
+		mu:            sync.RWMutex{},
 	}
 
 	if err := b.Reconfigure(ctx, nil, conf); err != nil {
