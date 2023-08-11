@@ -9,5 +9,5 @@
       "model": "viam-labs:board:RevolutionPi"
     }
   ],
-  "entrypoint": "viam-revolution-pi-linux-arm64"
+  "entrypoint": "viam-revolution-pi"
 }
