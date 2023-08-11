@@ -47,9 +47,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     needs: [build, test]
+    if: github.event_name == 'release'
     steps:
     - name: Upload
-      if: github.event_name == 'release'
       uses: viamrobotics/upload-module@main
       with:
         module-path: viam-revolution-pi.tar.gz
