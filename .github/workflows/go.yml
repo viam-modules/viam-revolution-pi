@@ -5,7 +5,8 @@ name: Go
 
 on:
   push:
-    branches: [ "main" ]
+  release:
+    types: [published]
   pull_request:
     branches: [ "main" ]
 
@@ -31,6 +32,7 @@ jobs:
       run: tar -zcf viam-revolution-pi.tar.gz viam-revolution-pi
 
     - name: Upload
+      if: github.event_name == 'release'
       uses: viamrobotics/upload-module@main
       with:
         module-path: viam-revolution-pi.tar.gz
