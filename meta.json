@@ -1,0 +1,13 @@
+{
+  "name": "viam-labs:viam-revolution-pi",
+  "visibility": "public",
+  "url": "",
+  "description": "A modular component for the Revolution Pi",
+  "models": [
+    {
+      "api": "rdk:component:board",
+      "model": "viam-labs:board:RevolutionPi"
+    }
+  ],
+  "entrypoint": "viam-revolution-pi-linux-arm64"
+}
