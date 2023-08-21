@@ -1,7 +1,7 @@
 {
   "name": "viam-labs:viam-revolution-pi",
   "visibility": "public",
-  "url": "",
+  "url": "https://github.com/viam-labs/viam-revolution-pi",
   "description": "A modular component for the Revolution Pi",
   "models": [
     {
