@@ -83,7 +83,7 @@ jobs:
       matrix:
         runner: [ ubuntu-latest ]
         arch: [ arm64 ]
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
     needs: [build, test]
     env:
       os: ${{contains(matrix.runner, 'ubuntu') && 'linux' || contains(matrix.runner, 'macos') && 'macos' || 'unknown'}}
