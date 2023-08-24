@@ -11,9 +11,16 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner: [ ubuntu-latest ]
+        arch: [ arm64 ]
+    runs-on: ${{ matrix.runner }}
+    env:
+      os: ${{contains(matrix.runner, 'ubuntu') && 'linux' || contains(matrix.runner, 'macos') && 'macos' || 'unknown'}}
+      GOOS: ${{contains(matrix.runner, 'ubuntu') && 'linux' || contains(matrix.runner, 'macos') && 'darwin' || 'unknown'}}
+      GOARCH: ${{ matrix.arch }}
     steps:
     - name: Check out code
       if: github.event_name != 'pull_request_target'
@@ -32,21 +39,26 @@ jobs:
         go-version: '1.20'
 
     - name: Build linux arm64
-      env:
-        GOOS: linux
-        GOARCH: arm64
       run: go build -o viam-revolution-pi -v .
 
     - name: Package
-      run: tar -zcf viam-revolution-pi.tar.gz viam-revolution-pi
+      run: tar -zcf viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}.tar.gz viam-revolution-pi
     
     - uses: actions/upload-artifact@v3
       with:
-        name: viam-revolution-pi
-        path: viam-revolution-pi.tar.gz
+        name: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}
+        path: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}.tar.gz
 
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner: [ ubuntu-latest ]
+        arch: [ arm64 ]
+    runs-on: ${{ matrix.runner }}
+    env:
+      os: ${{contains(matrix.runner, 'ubuntu') && 'linux' || contains(matrix.runner, 'macos') && 'macos' || 'unknown'}}
+      GOOS: ${{contains(matrix.runner, 'ubuntu') && 'linux' || contains(matrix.runner, 'macos') && 'darwin' || 'unknown'}}
+      GOARCH: ${{ matrix.arch }}
     steps:
     - name: Check out code
       if: github.event_name != 'pull_request_target'
@@ -67,8 +79,16 @@ jobs:
       run: go test -v ./...
 
   publish:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner: [ ubuntu-latest ]
+        arch: [ arm64 ]
+    runs-on: ${{ matrix.runner }}
     needs: [build, test]
+    env:
+      os: ${{contains(matrix.runner, 'ubuntu') && 'linux' || contains(matrix.runner, 'macos') && 'macos' || 'unknown'}}
+      GOOS: ${{contains(matrix.runner, 'ubuntu') && 'linux' || contains(matrix.runner, 'macos') && 'darwin' || 'unknown'}}
+      GOARCH: ${{ matrix.arch }}
     if: github.event_name == 'release'
     steps:
     - name: Check out code
@@ -84,12 +104,12 @@ jobs:
 
     - uses: actions/download-artifact@v3
       with:
-        name: viam-revolution-pi
+        name: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}
     - name: Upload
       uses: viamrobotics/upload-module@main
       with:
-        module-path: viam-revolution-pi.tar.gz
+        module-path: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}.tar.gz
         namespace: viam-labs
-        platform: linux/arm64
+        platform: ${{ env.os }}/${{ matrix.arch }}
         version: ${{ github.ref_name }}
         cli-config-secret: ${{ secrets.cli_config }}
