@@ -20,7 +20,7 @@ import (
 	"go.viam.com/rdk/resource"
 )
 
-var Model = resource.NewModel("viam-labs", "board", "RevolutionPi")
+var Model = resource.NewModel("viam-labs", "kunbus", "revolutionpi")
 
 type revolutionPiBoard struct {
 	resource.Named

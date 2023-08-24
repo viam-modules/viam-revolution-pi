@@ -1,4 +1,4 @@
-module thegreatco/viam-revolution-pi
+module viam-labs/viam-revolution-pi
 
 go 1.19
 

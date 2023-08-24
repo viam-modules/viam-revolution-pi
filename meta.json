@@ -6,7 +6,7 @@
   "models": [
     {
       "api": "rdk:component:board",
-      "model": "viam-labs:board:RevolutionPi"
+      "model": "viam-labs:kunbus:revolutionpi"
     }
   ],
   "entrypoint": "viam-revolution-pi"

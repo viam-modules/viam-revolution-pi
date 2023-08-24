@@ -8,7 +8,7 @@ import (
 	"go.viam.com/rdk/module"
 	"go.viam.com/utils"
 
-	"thegreatco/viam-revolution-pi/revolution_pi"
+	"viam-labs/viam-revolution-pi/revolution_pi"
 )
 
 func main() {
