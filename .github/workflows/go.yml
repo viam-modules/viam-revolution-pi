@@ -42,12 +42,12 @@ jobs:
       run: go build -o viam-revolution-pi -v .
 
     - name: Package
-      run: tar -zcf viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}.tar.gz viam-revolution-pi
+      run: tar -zcf viam-revolution-pi-${{ env.os }}-${{ env.GOARCH }}.tar.gz viam-revolution-pi
     
     - uses: actions/upload-artifact@v3
       with:
-        name: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}
-        path: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}.tar.gz
+        name: viam-revolution-pi-${{ env.os }}-${{ env.GOARCH }}
+        path: viam-revolution-pi-${{ env.os }}-${{ env.GOARCH }}.tar.gz
 
   test:
     strategy:
@@ -104,12 +104,12 @@ jobs:
 
     - uses: actions/download-artifact@v3
       with:
-        name: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}
+        name: viam-revolution-pi-${{ env.os }}-${{ env.GOARCH }}
     - name: Upload
       uses: viamrobotics/upload-module@main
       with:
-        module-path: viam-revolution-pi-${{ env.os }}-${{ matrix.arch }}.tar.gz
+        module-path: viam-revolution-pi-${{ env.os }}-${{ env.GOARCH }}.tar.gz
         namespace: viam-labs
-        platform: ${{ env.os }}/${{ matrix.arch }}
+        platform: ${{ env.GOOS }}/${{ env.GOARCH }}
         version: ${{ github.ref_name }}
         cli-config-secret: ${{ secrets.cli_config }}
