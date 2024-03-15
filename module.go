@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/edaniels/golog"
 	"go.viam.com/rdk/components/board"
+	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/module"
 	"go.viam.com/utils"
 
@@ -15,7 +15,7 @@ func main() {
 	utils.ContextualMain(mainWithArgs, module.NewLoggerFromArgs("revolution_pi"))
 }
 
-func mainWithArgs(ctx context.Context, args []string, logger golog.Logger) (err error) {
+func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (err error) {
 	custom_module, err := module.NewModuleFromArgs(ctx, logger)
 	if err != nil {
 		return err

@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/edaniels/golog"
 	commonpb "go.viam.com/api/common/v1"
 	pb "go.viam.com/api/component/board/v1"
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/grpc"
+	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
 )
 
@@ -25,9 +25,7 @@ var Model = resource.NewModel("viam-labs", "kunbus", "revolutionpi")
 type revolutionPiBoard struct {
 	resource.Named
 	mu            sync.RWMutex
-	logger        golog.Logger
-	SPIs          []string
-	I2Cs          []string
+	logger        logging.Logger
 	AnalogReaders []string
 	GPIONames     []string
 
@@ -48,7 +46,7 @@ func newBoard(
 	ctx context.Context,
 	_ resource.Dependencies,
 	conf resource.Config,
-	logger golog.Logger,
+	logger logging.Logger,
 ) (board.Board, error) {
 
 	logger.Info("Starting RevolutionPi Driver v0.0.5")
@@ -65,8 +63,6 @@ func newBoard(
 		logger:        logger,
 		cancelCtx:     cancelCtx,
 		cancelFunc:    cancelFunc,
-		SPIs:          []string{},
-		I2Cs:          []string{},
 		AnalogReaders: []string{},
 		GPIONames:     []string{},
 		controlChip:   &gpioChip,
@@ -94,14 +90,6 @@ func (b *revolutionPiBoard) Reconfigure(
 	return nil
 }
 
-func (b *revolutionPiBoard) SPIByName(name string) (board.SPI, bool) {
-	return nil, false
-}
-
-func (b *revolutionPiBoard) I2CByName(name string) (board.I2C, bool) {
-	return nil, false
-}
-
 func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
 	reader, err := b.controlChip.GetAnalogInput(name)
 	if err != nil {
@@ -114,14 +102,6 @@ func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader,
 
 func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
 	return nil, false // Digital interrupts aren't supported.
-}
-
-func (b *revolutionPiBoard) SPINames() []string {
-	return b.SPIs
-}
-
-func (b *revolutionPiBoard) I2CNames() []string {
-	return b.I2Cs
 }
 
 func (b *revolutionPiBoard) AnalogReaderNames() []string {
@@ -144,12 +124,12 @@ func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interfa
 	return &commonpb.BoardStatus{}, nil
 }
 
-func (b *revolutionPiBoard) ModelAttributes() board.ModelAttributes {
-	return board.ModelAttributes{}
-}
-
 func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
 	return grpc.UnimplementedError
+}
+
+func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value int32, extra map[string]interface{}) error {
+	return nil
 }
 
 func (b *revolutionPiBoard) Close(ctx context.Context) error {
