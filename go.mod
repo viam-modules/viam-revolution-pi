@@ -5,8 +5,8 @@ go 1.19
 require (
 	github.com/edaniels/golog v0.0.0-20230215213219-28954395e8d0
 	go.viam.com/api v0.1.275
-	go.viam.com/rdk v0.22.0
-	go.viam.com/utils v0.1.67
+	go.viam.com/rdk v0.22.1
+	go.viam.com/utils v0.1.68
 	golang.org/x/sys v0.18.0
 )
 
