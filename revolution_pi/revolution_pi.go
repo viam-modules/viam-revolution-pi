@@ -20,9 +20,10 @@ import (
 	"go.viam.com/rdk/resource"
 )
 
-
 type revolutionPiBoard struct {
 	resource.Named
+	resource.AlwaysRebuild
+
 	mu            sync.RWMutex
 	logger        logging.Logger
 	AnalogReaders []string
@@ -68,25 +69,7 @@ func newBoard(
 		mu:            sync.RWMutex{},
 	}
 
-	if err := b.Reconfigure(ctx, nil, conf); err != nil {
-		return nil, err
-	}
 	return &b, nil
-}
-
-func (b *revolutionPiBoard) Reconfigure(
-	ctx context.Context,
-	_ resource.Dependencies,
-	conf resource.Config,
-) error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	_, err := resource.NativeConfig[*Config](conf)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
