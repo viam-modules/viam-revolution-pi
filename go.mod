@@ -3,8 +3,8 @@ module viam-labs/viam-revolution-pi
 go 1.19
 
 require (
-	go.viam.com/api v0.1.275
-	go.viam.com/rdk v0.23.0
+	go.viam.com/api v0.1.276
+	go.viam.com/rdk v0.23.1
 	go.viam.com/utils v0.1.69
 	golang.org/x/sys v0.18.0
 )
