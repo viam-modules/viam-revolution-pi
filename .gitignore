@@ -24,3 +24,8 @@ go.work
 
 # vscode files
 .vscode
+
+# binary built from module
+viam-revolution-pi
+
+
