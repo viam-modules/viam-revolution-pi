@@ -9,7 +9,8 @@ on:
     types: [published]
   pull_request_target:
     branches: [ "main" ]
-
+permissions:
+  contents: write
 env:
   binary_file_name: viam-revolution-pi
 
