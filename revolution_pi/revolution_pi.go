@@ -22,7 +22,7 @@ import (
 
 type revolutionPiBoard struct {
 	resource.Named
-	resource.AlwaysRebuild
+	resource.TriviallyReconfigurable
 
 	mu            sync.RWMutex
 	logger        logging.Logger
