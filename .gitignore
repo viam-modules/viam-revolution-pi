@@ -21,3 +21,11 @@
 go.work
 
 /vendor
+
+# vscode files
+.vscode
+
+# binary built from module
+viam-revolution-pi
+
+

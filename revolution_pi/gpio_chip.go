@@ -8,13 +8,13 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/edaniels/golog"
+	"go.viam.com/rdk/logging"
 	"golang.org/x/sys/unix"
 )
 
 type gpioChip struct {
 	dev        string
-	logger     golog.Logger
+	logger     logging.Logger
 	fileHandle *os.File
 }
 
