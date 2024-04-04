@@ -27,7 +27,10 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	}
 	g.logger.Debugf("Found GPIO pin: %#v", pin)
 	gpioPin := gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
-	gpioPin.initialize()
+	err = gpioPin.initialize()
+	if err != nil {
+		return nil, err
+	}
 	return &gpioPin, nil
 }
 
@@ -86,7 +89,6 @@ func (g *gpioChip) ioCtl(command uintptr, message unsafe.Pointer) syscall.Errno 
 func (g *gpioChip) ioCtlReturns(command uintptr, message unsafe.Pointer) (uintptr, uintptr, syscall.Errno) {
 	handle := g.fileHandle.Fd()
 	g.logger.Debugf("Handle: %#v, Command: %#v, Message: %#v", handle, command, message)
-	unix.Syscall(unix.SYS_IOCTL, handle, command, uintptr(message))
 	return unix.Syscall(unix.SYS_IOCTL, handle, command, uintptr(message))
 }
 

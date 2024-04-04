@@ -48,7 +48,6 @@ func newBoard(
 	conf resource.Config,
 	logger logging.Logger,
 ) (board.Board, error) {
-
 	logger.Info("Starting RevolutionPi Driver v0.0.5")
 	devPath := filepath.Join("/dev", "piControl0")
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))

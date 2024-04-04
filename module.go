@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"viam-labs/viam-revolution-pi/revolution_pi"
 
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/module"
 	"go.viam.com/utils"
-
 	"viam-labs/viam-revolution-pi/revolution_pi"
 )
 
