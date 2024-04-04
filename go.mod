@@ -1,8 +1,9 @@
 module viam-labs/viam-revolution-pi
 
-go 1.19
+go 1.21
 
 require (
+	go.uber.org/multierr v1.11.0
 	go.viam.com/api v0.1.276
 	go.viam.com/rdk v0.23.1
 	go.viam.com/utils v0.1.60
@@ -118,7 +119,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/goleak v1.3.0 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.viam.com/test v1.1.1-0.20220913152726-5da9916c08a2 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
