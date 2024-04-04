@@ -83,6 +83,8 @@ func getModuleName(moduleType uint16) string {
 		return "RevPi DO"
 	case moduleType == 103:
 		return "RevPi AIO"
+	case moduleType == 136:
+		return "RevPi Connect 4"
 	case moduleType == 0x6001:
 		return "ModbusTCP Slave Adapter"
 	case moduleType == 0x6002:
