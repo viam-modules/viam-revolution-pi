@@ -1,7 +1,7 @@
 package revolution_pi
 
 func Str32(chars [32]byte) string {
-	var i = 0
+	i := 0
 	var c byte
 	for i, c = range chars {
 		if c == 0 {

@@ -32,19 +32,19 @@ func (pin *gpioPin) initialize() error {
 	return nil
 }
 
-// Get the memory address to use for modifying the PWM duty cycle
+// Get the memory address to use for modifying the PWM duty cycle.
 func (pin *gpioPin) getPwmAddress() uint16 {
 	// The address for the pin is either 70 or 71,
 	// the bit position is used to figure out the offset from the base address of 72 for PWM
 	return pin.Address + 2 + (uint16(pin.BitPosition) % 8) + ((pin.Address - 70) * 7)
 }
 
-// Get the memory address to use for modifying the pin state (on/off)
+// Get the memory address to use for modifying the pin state (on/off).
 func (pin *gpioPin) getGpioAddress() uint16 {
 	return pin.Address + (uint16(pin.BitPosition) / 8)
 }
 
-// Set sets the state of the pin on or off
+// Set sets the state of the pin on or off.
 func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interface{}) error {
 	if !pin.initialized {
 		return errors.New("pin not initialized")
@@ -105,7 +105,7 @@ func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (floa
 	b[1] = 0x00
 	val := binary.LittleEndian.Uint16(b)
 	if val > 100 {
-		pin.ControlChip.logger.Infof("got PWM duty cycle greater than 100")
+		pin.ControlChip.logger.Info("got PWM duty cycle greater than 100")
 	}
 	return float64(val), nil
 }
@@ -146,7 +146,7 @@ func (pin *gpioPin) PWMFreq(ctx context.Context, extra map[string]interface{}) (
 		return 0, errors.New("pin not initialized")
 	}
 
-	b := make([]byte, 1, 1)
+	b := make([]byte, 1)
 	n, err := pin.ControlChip.fileHandle.ReadAt(b, 112)
 	if err != nil {
 		return 0, err
@@ -169,7 +169,7 @@ func (pin *gpioPin) SetPWMFreq(ctx context.Context, freqHz uint, extra map[strin
 	return errors.New("not supported")
 }
 
-// disablePwm sets the bit to turn off PWM for the pin in the controller
+// disablePwm sets the bit to turn off PWM for the pin in the controller.
 func (pin *gpioPin) disablePwm() error {
 	// We actually need to enable PWM for the pin, we can't just set the PWM value
 	// Much like in Set, we can't modify a single bit using the regular read/write in file stream
@@ -177,13 +177,13 @@ func (pin *gpioPin) disablePwm() error {
 	command := SPIValue{i16uAddress: 110 + (pin.Address - 70), i8uBit: pin.BitPosition, i8uValue: 0}
 	syscallErr := pin.ControlChip.ioCtl(uintptr(KB_SET_VALUE), unsafe.Pointer(&command))
 	if syscallErr != 0 {
-		return fmt.Errorf("error turning on pwm for output: %v", syscallErr)
+		return fmt.Errorf("error turning on pwm for output: %w", syscallErr)
 	}
 	pin.pwmMode = false
 	return nil
 }
 
-// enablePwm sets the bit to turn on PWM for the pin in the controller
+// enablePwm sets the bit to turn on PWM for the pin in the controller.
 func (pin *gpioPin) enablePwm() error {
 	// We actually need to enable PWM for the pin, we can't just set the PWM value
 	// Much like in Set, we can't modify a single bit using the regular read/write in file stream
@@ -191,7 +191,7 @@ func (pin *gpioPin) enablePwm() error {
 	command := SPIValue{i16uAddress: 110 + (pin.Address - 70), i8uBit: pin.BitPosition, i8uValue: 1}
 	syscallErr := pin.ControlChip.ioCtl(uintptr(KB_SET_VALUE), unsafe.Pointer(&command))
 	if syscallErr != 0 {
-		return fmt.Errorf("error turning on pwm for output: %v", syscallErr)
+		return fmt.Errorf("error turning on pwm for output: %w", syscallErr)
 	}
 
 	// mark the pin as having pwm enabled

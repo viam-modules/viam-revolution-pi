@@ -48,7 +48,6 @@ func newBoard(
 	conf resource.Config,
 	logger logging.Logger,
 ) (board.Board, error) {
-
 	logger.Info("Starting RevolutionPi Driver v0.0.5")
 	devPath := filepath.Join("/dev", "piControl0")
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
@@ -67,6 +66,11 @@ func newBoard(
 		GPIONames:     []string{},
 		controlChip:   &gpioChip,
 		mu:            sync.RWMutex{},
+	}
+
+	err = b.controlChip.showDeviceList()
+	if err != nil {
+		return nil, err
 	}
 
 	return &b, nil
@@ -126,4 +130,21 @@ func (b *revolutionPiBoard) Close(ctx context.Context) error {
 	b.activeBackgroundWorkers.Wait()
 	b.logger.Info("Board closed.")
 	return nil
+}
+
+func (b *revolutionPiBoard) DoCommand(ctx context.Context,
+	req map[string]interface{},
+) (map[string]interface{}, error) {
+	resp := make(map[string]interface{})
+
+	_, ok := req["getStatus"]
+	if ok {
+		err := b.controlChip.showDeviceList()
+		if err != nil {
+			return nil, err
+		}
+		resp["getStatus"] = "status ok"
+	}
+
+	return resp, nil
 }

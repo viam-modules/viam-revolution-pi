@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	"go.uber.org/multierr"
 	"go.viam.com/rdk/logging"
 	"golang.org/x/sys/unix"
 )
@@ -26,7 +27,10 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	}
 	g.logger.Debugf("Found GPIO pin: %#v", pin)
 	gpioPin := gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
-	gpioPin.initialize()
+	err = gpioPin.initialize()
+	if err != nil {
+		return nil, err
+	}
 	return &gpioPin, nil
 }
 
@@ -51,11 +55,41 @@ func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 	return nil
 }
 
+func (g *gpioChip) showDeviceList() error {
+	var deviceInfoList [255]SDeviceInfo
+	cnt, _, err := g.ioCtlReturns(uintptr(KB_GET_DEVICE_INFO_LIST), unsafe.Pointer(&deviceInfoList))
+	if err != 0 {
+		e := fmt.Errorf("failed to retrieve device info list: %d", -int(cnt))
+		return e
+	}
+
+	var deviceErrs error
+	for i := 0; i < int(cnt); i++ {
+		if deviceInfoList[i].i8uActive != 0 {
+			g.logger.Debugf("device %d is of type %s is active", i, getModuleName(deviceInfoList[i].i16uModuleType))
+		} else {
+			checkConnected := deviceInfoList[i].i16uModuleType&PICONTROL_NOT_CONNECTED == PICONTROL_NOT_CONNECTED
+			if checkConnected {
+				deviceErr := fmt.Errorf("device %d is not connected!", i)
+				deviceErrs = multierr.Combine(deviceErrs, deviceErr)
+			} else {
+				deviceErr := fmt.Errorf("device %d is type %s but is not configured!", i, getModuleName(deviceInfoList[i].i16uModuleType))
+				deviceErrs = multierr.Combine(deviceErrs, deviceErr)
+			}
+		}
+	}
+	return deviceErrs
+}
+
 func (g *gpioChip) ioCtl(command uintptr, message unsafe.Pointer) syscall.Errno {
+	_, _, err := g.ioCtlReturns(command, message)
+	return err
+}
+
+func (g *gpioChip) ioCtlReturns(command uintptr, message unsafe.Pointer) (uintptr, uintptr, syscall.Errno) {
 	handle := g.fileHandle.Fd()
 	g.logger.Debugf("Handle: %#v, Command: %#v, Message: %#v", handle, command, message)
-	_, _, err := unix.Syscall(unix.SYS_IOCTL, handle, command, uintptr(message))
-	return err
+	return unix.Syscall(unix.SYS_IOCTL, handle, command, uintptr(message))
 }
 
 func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
