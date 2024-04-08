@@ -134,9 +134,9 @@ func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[
 		}
 	}
 
-	pwmAddress := pin.getPwmAddress()
-	pin.ControlChip.logger.Infof("initial Address to %v", pin.Address)
-	pin.ControlChip.logger.Infof("Writing to %v", pwmAddress)
+	// pwmAddress := pin.getPwmAddress()
+	// pin.ControlChip.logger.Infof("initial Address to %v", pin.Address)
+	// pin.ControlChip.logger.Infof("Writing to %v", pwmAddress)
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(dutyCyclePct))
 	b = b[:1]
@@ -193,6 +193,9 @@ func (pin *gpioPin) enablePwm() error {
 	// Much like in Set, we can't modify a single bit using the regular read/write in file stream
 	// so we have to use the ioctl command to modify just a single bit
 	command := SPIValue{i16uAddress: 110 + (pin.Address - 70), i8uBit: pin.BitPosition, i8uValue: 1}
+	pin.ControlChip.logger.Info("address: ", command.i16uAddress)
+	pin.ControlChip.logger.Info("position: ", command.i8uBit)
+	pin.ControlChip.logger.Info("value: ", command.i8uValue)
 	syscallErr := pin.ControlChip.ioCtl(uintptr(KB_SET_VALUE), unsafe.Pointer(&command))
 	if syscallErr != 0 {
 		return fmt.Errorf("error turning on pwm for output: %w", syscallErr)
