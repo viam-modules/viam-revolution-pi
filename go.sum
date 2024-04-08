@@ -826,6 +826,8 @@ github.com/maratori/testableexamples v1.0.0/go.mod h1:4rhjL1n20TUTT4vdh3RDqSizKL
 github.com/maratori/testpackage v1.0.1/go.mod h1:ddKdw+XG0Phzhx8BFDTKgpWP4i7MpApTE5fXSKAqwDU=
 github.com/maratori/testpackage v1.1.0 h1:GJY4wlzQhuBusMF1oahQCBtUV/AQ/k69IZ68vxaac2Q=
 github.com/maratori/testpackage v1.1.0/go.mod h1:PeAhzU8qkCwdGEMTEupsHJNlQu2gZopMC6RjbhmHeDc=
+github.com/martha-johnston/api v0.0.0-20240408151827-38a51d2fa137 h1:u/aZJyDM+39EdFESKaBDyesihQdEChUvavSa+9+McmM=
+github.com/martha-johnston/api v0.0.0-20240408151827-38a51d2fa137/go.mod h1:msa4TPrMVeRDcG4YzKA/S6wLEUC7GyHQE973JklrQ10=
 github.com/matoous/godox v0.0.0-20210227103229-6504466cf951 h1:pWxk9e//NbPwfxat7RXkts09K+dEBJWakUWwICVqYbA=
 github.com/matoous/godox v0.0.0-20210227103229-6504466cf951/go.mod h1:1BELzlh859Sh1c6+90blK8lbYy0kwQf1bYlBhBysy1s=
 github.com/matryer/is v1.4.0 h1:sosSmIWwkYITGrxZ25ULNDeKiMNzFSr4V/eqBQP0PeE=
@@ -1420,8 +1422,6 @@ go.uber.org/zap v1.18.1/go.mod h1:xg/QME4nWcxGxrpdeYfq7UvYrLh66cuVKdrbD1XF/NI=
 go.uber.org/zap v1.23.0/go.mod h1:D+nX8jyLsMHMYrln8A0rJjFt/T/9/bGgIhAqxv5URuY=
 go.uber.org/zap v1.27.0 h1:aJMhYGrd5QSmlpLMr2MftRKl7t8J8PTZPA732ud/XR8=
 go.uber.org/zap v1.27.0/go.mod h1:GB2qFLM7cTU87MWRP2mPIjqfIDnGu+VIO4V/SdhGo2E=
-go.viam.com/api v0.1.276 h1:hlj/FT6dnib8M5n1+lOAuZEP22KLMh4BRgd/1x/OYiw=
-go.viam.com/api v0.1.276/go.mod h1:msa4TPrMVeRDcG4YzKA/S6wLEUC7GyHQE973JklrQ10=
 go.viam.com/rdk v0.23.1 h1:IjAtpQTnNjPqL15AEUbx/m/x1Be+sx1ZSgUhvJIV5ig=
 go.viam.com/rdk v0.23.1/go.mod h1:IQKyyuT0NFrgXT6k5ltB7B+pKDZyoQxabeVPfnWV79o=
 go.viam.com/test v1.1.1-0.20220913152726-5da9916c08a2 h1:oBiK580EnEIzgFLU4lHOXmGAE3MxnVbeR7s1wp/F3Ps=
