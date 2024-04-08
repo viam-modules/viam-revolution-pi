@@ -87,7 +87,7 @@ func (pin *gpioPin) Get(ctx context.Context, extra map[string]interface{}) (bool
 // PWM gets the pin's given duty cycle.
 func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (float64, error) {
 	pwmAddress := pin.getPwmAddress()
-	pin.ControlChip.logger.Debugf("Reading from %v", pwmAddress)
+	pin.ControlChip.logger.Infof("Reading from %v", pwmAddress)
 
 	if !pin.initialized {
 		return 0, errors.New("pin not initialized")
@@ -95,7 +95,7 @@ func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (floa
 
 	b := make([]byte, 2)
 	n, err := pin.ControlChip.fileHandle.ReadAt(b, int64(pwmAddress))
-	pin.ControlChip.logger.Debugf("Read %#v bytes", b)
+	pin.ControlChip.logger.Infof("Read %#d bytes", b)
 	if n != 2 {
 		return 0, fmt.Errorf("expected 2 bytes, got %#v", b)
 	}
@@ -107,7 +107,7 @@ func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (floa
 	if val > 100 {
 		pin.ControlChip.logger.Info("got PWM duty cycle greater than 100")
 	}
-	return float64(val), nil
+	return float64(val) / 100, nil
 }
 
 // SetPWM sets the pin to the given duty cycle.
@@ -115,6 +115,8 @@ func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[
 	if !pin.initialized {
 		return errors.New("pin not initialized")
 	}
+	// convert from 0-1 to 0-100
+	dutyCyclePct = 100 * dutyCyclePct
 
 	if dutyCyclePct > 100 {
 		// Should we clamp or error?
@@ -133,10 +135,12 @@ func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[
 	}
 
 	pwmAddress := pin.getPwmAddress()
+	pin.ControlChip.logger.Infof("initial Address to %v", pin.Address)
+	pin.ControlChip.logger.Infof("Writing to %v", pwmAddress)
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(dutyCyclePct))
 	b = b[:1]
-	err := pin.ControlChip.writeValue(int64(pwmAddress), b)
+	err := pin.ControlChip.writeValue(int64(pin.Address), b)
 	return err
 }
 

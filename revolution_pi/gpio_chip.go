@@ -110,9 +110,9 @@ func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
 }
 
 func (g *gpioChip) writeValue(address int64, b []byte) error {
-	g.logger.Debugf("Writing %#v to %v", b, address)
+	g.logger.Debugf("Writing %#d to %v", b, address)
 	n, err := g.fileHandle.WriteAt(b, address)
-	g.logger.Debugf("Wrote %#v byte(s), n: %v", b, n)
+	g.logger.Debugf("Wrote %#d byte(s), n: %d", b, n)
 	if err != nil {
 		return err
 	}
