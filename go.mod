@@ -10,9 +10,9 @@ require (
 	github.com/golangci/golangci-lint v1.51.2
 	github.com/rhysd/actionlint v1.6.24
 	go.uber.org/multierr v1.11.0
-	go.viam.com/api v0.1.276
+	go.viam.com/api v0.1.281
 	go.viam.com/rdk v0.23.1
-	go.viam.com/utils v0.1.60
+	go.viam.com/utils v0.1.71
 	golang.org/x/sys v0.18.0
 	gotest.tools/gotestsum v1.10.0
 
@@ -97,6 +97,7 @@ require (
 	github.com/go-toolsmith/astp v1.1.0 // indirect
 	github.com/go-toolsmith/strparse v1.1.0 // indirect
 	github.com/go-toolsmith/typep v1.1.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1 // indirect
 	github.com/go-xmlfmt/xmlfmt v1.1.2 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
@@ -313,3 +314,5 @@ require (
 )
 
 replace go.viam.com/api => github.com/martha-johnston/api v0.0.0-20240408151827-38a51d2fa137
+
+replace go.viam.com/rdk => github.com/martha-johnston/rdk v0.0.0-20240403203911-8b9cbc64b82d

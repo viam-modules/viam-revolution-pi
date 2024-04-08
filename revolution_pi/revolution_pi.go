@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	commonpb "go.viam.com/api/common/v1"
 	pb "go.viam.com/api/component/board/v1"
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/grpc"
@@ -86,6 +85,11 @@ func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader,
 	return reader, true
 }
 
+// StreamTicks starts a stream of digital interrupt ticks.
+func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []string, ch chan board.Tick, extra map[string]interface{}) error {
+	return grpc.UnimplementedError
+}
+
 func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
 	return nil, false // Digital interrupts aren't supported.
 }
@@ -106,9 +110,9 @@ func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error)
 	return b.controlChip.GetGPIOPin(pinName)
 }
 
-func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
-	return &commonpb.BoardStatus{}, nil
-}
+// func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
+// 	return &commonpb.BoardStatus{}, nil
+// }
 
 func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
 	return grpc.UnimplementedError
