@@ -73,6 +73,13 @@ type SDeviceInfo struct {
 	i8uReserve       [30]uint8 // space for future extensions without changing the size of the struct
 }
 
+func (dev *SDeviceInfo) isDIO() bool {
+	if dev.i16uModuleType == 96 || dev.i16uModuleType == 97 || dev.i16uModuleType == 98 {
+		return true
+	}
+	return false
+}
+
 func getModuleName(moduleType uint16) string {
 	switch {
 	case moduleType == 95:

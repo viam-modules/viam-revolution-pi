@@ -11,6 +11,11 @@ import (
 	"unsafe"
 )
 
+const (
+	outputPWMActiveOffset    = 110 // offset for reading a PWM frequency from a DIO
+	outputPWMFrequencyOffset = 112
+)
+
 type gpioPin struct {
 	Name        string // Variable name
 	Address     uint16 // Address of the byte in the process image
@@ -22,10 +27,32 @@ type gpioPin struct {
 }
 
 func (pin *gpioPin) initialize() error {
-	val, err := pin.ControlChip.getBitValue(int64(110+(pin.Address-70)), pin.BitPosition)
+	dio, err := pin.ControlChip.findDIODevice(pin.Address)
 	if err != nil {
+		pin.ControlChip.logger.Debugf("pin is not from the DIO")
 		return err
 	}
+	var val bool
+	// if the requested pin is checking the Output WORD
+	if pin.Address == dio.i16uOutputOffset {
+		val, err = pin.ControlChip.getBitValue(int64(dio.i16uInputOffset+outputPWMActiveOffset), pin.BitPosition)
+		if err != nil {
+			return err
+		}
+	} else {
+		// we want to read a bit from OutputPWMActive WORD to see if pwm is enabled,
+		// so we convert the pin address into the matching bits, where PWM_1 corresponds to bit 0.
+		// Output pins start at dio.i16uOutputOffset+2, so we can subtract pin address by that amount to get the correct bit
+		pwmActiveBitPosition := uint8(pin.Address - dio.i16uOutputOffset - 2)
+		val, err = pin.ControlChip.getBitValue(int64(dio.i16uInputOffset+outputPWMActiveOffset), pwmActiveBitPosition)
+		if err != nil {
+			return err
+		}
+	}
+
+	pin.ControlChip.logger.Infof("address: %d", pin.Address)
+	pin.ControlChip.logger.Infof("i16uAddress: %d", dio.i16uInputOffset+outputPWMActiveOffset)
+	pin.ControlChip.logger.Infof("position: %d", pin.BitPosition)
 	pin.pwmMode = val
 	pin.initialized = true
 	pin.ControlChip.logger.Infof("Pin initialized: %#v", pin)
@@ -57,10 +84,11 @@ func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interfa
 
 	// disable pwm if enabled
 	if pin.pwmMode {
-		err := pin.disablePwm()
-		if err != nil {
-			return err
-		}
+		// err := pin.disablePwm()
+		// if err != nil {
+		// 	return err
+		// }
+		return fmt.Errorf("cannot set pin state, Pin %s is configured as PWM", pin.Name)
 	}
 
 	// Because there could be a race in reading the byte with pin states, mutating,
@@ -128,10 +156,11 @@ func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[
 
 	// if the pin isn't in PWM mode, we have to turn PWM on
 	if !pin.pwmMode {
-		err := pin.enablePwm()
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("pin %s is not configured for PWM", pin.Name)
+		// err := pin.enablePwm()
+		// if err != nil {
+		// 	return err
+		// }
 	}
 
 	// pwmAddress := pin.getPwmAddress()
@@ -150,17 +179,39 @@ func (pin *gpioPin) PWMFreq(ctx context.Context, extra map[string]interface{}) (
 		return 0, errors.New("pin not initialized")
 	}
 
+	dio, err := pin.ControlChip.findDIODevice(pin.Address)
+	if err != nil {
+		return 0, err
+	}
+
 	b := make([]byte, 1)
-	n, err := pin.ControlChip.fileHandle.ReadAt(b, 112)
+	n, err := pin.ControlChip.fileHandle.ReadAt(b, int64(dio.i16uInputOffset+outputPWMFrequencyOffset))
 	if err != nil {
 		return 0, err
 	}
 	if n != 1 {
 		return 0, errors.New("unable to read PWM Frequency")
 	}
-	pin.ControlChip.logger.Infof("Current frequency: %#v", b)
+	pin.ControlChip.logger.Debugf("Current frequency: %#d", b)
 
-	return 0, nil
+	return stepSizeToFreq(b), nil
+}
+
+func stepSizeToFreq(step []byte) uint {
+	// b only has one byte
+	switch step[0] {
+	case 1:
+		return 40
+	case 2:
+		return 80
+	case 4:
+		return 160
+	case 5:
+		return 200
+	case 10:
+		return 400
+	}
+	return 0
 }
 
 // SetPWMFreq sets the given pin to the given PWM frequency. For Raspberry Pis,
@@ -170,7 +221,7 @@ func (pin *gpioPin) SetPWMFreq(ctx context.Context, freqHz uint, extra map[strin
 		return errors.New("pin not initialized")
 	}
 
-	return errors.New("not supported")
+	return errors.New("PWM Frequency must be set in PiCtory")
 }
 
 // disablePwm sets the bit to turn off PWM for the pin in the controller.
@@ -192,8 +243,15 @@ func (pin *gpioPin) enablePwm() error {
 	// We actually need to enable PWM for the pin, we can't just set the PWM value
 	// Much like in Set, we can't modify a single bit using the regular read/write in file stream
 	// so we have to use the ioctl command to modify just a single bit
-	command := SPIValue{i16uAddress: 110 + (pin.Address - 70), i8uBit: pin.BitPosition, i8uValue: 1}
-	pin.ControlChip.logger.Info("address: ", command.i16uAddress)
+
+	// find DIO device
+	dio, err := pin.ControlChip.findDIODevice(pin.Address)
+	if err != nil {
+		return err
+	}
+	command := SPIValue{i16uAddress: dio.i16uInputOffset + 112, i8uBit: pin.BitPosition, i8uValue: 1}
+	pin.ControlChip.logger.Info("address: ", pin.Address)
+	pin.ControlChip.logger.Info("i16uAddress: ", command.i16uAddress)
 	pin.ControlChip.logger.Info("position: ", command.i8uBit)
 	pin.ControlChip.logger.Info("value: ", command.i8uValue)
 	syscallErr := pin.ControlChip.ioCtl(uintptr(KB_SET_VALUE), unsafe.Pointer(&command))

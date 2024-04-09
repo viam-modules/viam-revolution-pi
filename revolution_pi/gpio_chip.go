@@ -17,6 +17,7 @@ type gpioChip struct {
 	dev        string
 	logger     logging.Logger
 	fileHandle *os.File
+	dioDevices []SDeviceInfo
 }
 
 func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
@@ -57,6 +58,7 @@ func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 
 func (g *gpioChip) showDeviceList() error {
 	var deviceInfoList [255]SDeviceInfo
+	g.dioDevices = []SDeviceInfo{}
 	cnt, _, err := g.ioCtlReturns(uintptr(KB_GET_DEVICE_INFO_LIST), unsafe.Pointer(&deviceInfoList))
 	if err != 0 {
 		e := fmt.Errorf("failed to retrieve device info list: %d", -int(cnt))
@@ -67,6 +69,10 @@ func (g *gpioChip) showDeviceList() error {
 	for i := 0; i < int(cnt); i++ {
 		if deviceInfoList[i].i8uActive != 0 {
 			g.logger.Debugf("device %d is of type %s is active", i, getModuleName(deviceInfoList[i].i16uModuleType))
+			if deviceInfoList[i].isDIO() {
+				g.logger.Info("device info: ", deviceInfoList[i])
+				g.dioDevices = append(g.dioDevices, deviceInfoList[i])
+			}
 		} else {
 			checkConnected := deviceInfoList[i].i16uModuleType&PICONTROL_NOT_CONNECTED == PICONTROL_NOT_CONNECTED
 			if checkConnected {
@@ -95,7 +101,7 @@ func (g *gpioChip) ioCtlReturns(command uintptr, message unsafe.Pointer) (uintpt
 func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
 	b := make([]byte, 1)
 	n, err := g.fileHandle.ReadAt(b, address)
-	g.logger.Debugf("Read %#v bytes", b)
+	g.logger.Infof("Read %#v bytes", b)
 	if n != 1 {
 		return false, fmt.Errorf("expected 1 byte, got %#v", b)
 	}
@@ -125,4 +131,17 @@ func (g *gpioChip) writeValue(address int64, b []byte) error {
 func (g *gpioChip) Close() error {
 	err := g.fileHandle.Close()
 	return err
+}
+
+func (g *gpioChip) findDIODevice(gpioAddress uint16) (SDeviceInfo, error) {
+
+	for _, dev := range g.dioDevices {
+		// need to test devOffsetLower with multiple DIO devices
+		devOffsetLower := dev.i16uInputOffset
+		devOffsetUpper := dev.i16uInputOffset + dev.i16uOutputLength + dev.i16uInputLength + dev.i16uConfigLength
+		if gpioAddress > devOffsetLower && gpioAddress < devOffsetUpper {
+			return dev, nil
+		}
+	}
+	return SDeviceInfo{}, fmt.Errorf("unable to find device for pin %d", gpioAddress)
 }
