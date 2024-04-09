@@ -104,10 +104,13 @@ func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interfa
 
 // Get gets the high/low state of the pin.
 func (pin *gpioPin) Get(ctx context.Context, extra map[string]interface{}) (bool, error) {
-	pin.ControlChip.logger.Debugf("Reading from %v", pin.getGpioAddress())
+	pin.ControlChip.logger.Infof("Reading from %v", pin.getGpioAddress())
 
 	if !pin.initialized {
 		return false, errors.New("pin not initialized")
+	}
+	if pin.pwmMode {
+		return false, fmt.Errorf("cannot get pin state, Pin %s is configured as PWM", pin.Name)
 	}
 	return pin.ControlChip.getBitValue(int64(pin.getGpioAddress()), pin.BitPosition)
 }
