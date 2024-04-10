@@ -47,6 +47,7 @@ func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 	g.logger.Debugf("Looking for address of %#v", pin)
+	//nolint:gosec
 	err := g.ioCtl(uintptr(KB_FIND_VARIABLE), unsafe.Pointer(pin))
 	if err != 0 {
 		e := fmt.Errorf("failed to get pin address info %v failed: %w", g.dev, err)
@@ -59,6 +60,7 @@ func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 func (g *gpioChip) showDeviceList() error {
 	var deviceInfoList [255]SDeviceInfo
 	g.dioDevices = []SDeviceInfo{}
+	//nolint:gosec
 	cnt, _, err := g.ioCtlReturns(uintptr(KB_GET_DEVICE_INFO_LIST), unsafe.Pointer(&deviceInfoList))
 	if err != 0 {
 		e := fmt.Errorf("failed to retrieve device info list: %d", -int(cnt))
@@ -134,7 +136,6 @@ func (g *gpioChip) Close() error {
 }
 
 func (g *gpioChip) findDIODevice(gpioAddress uint16) (SDeviceInfo, error) {
-
 	for _, dev := range g.dioDevices {
 		// need to test devOffsetLower with multiple DIO devices
 		devOffsetLower := dev.i16uInputOffset

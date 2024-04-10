@@ -34,7 +34,7 @@ type gpioPin struct {
 func (pin *gpioPin) initialize() error {
 	dio, err := pin.ControlChip.findDIODevice(pin.Address)
 	if err != nil {
-		pin.ControlChip.logger.Debugf("pin is not from the DIO")
+		pin.ControlChip.logger.Debug("pin is not from the DIO")
 		return err
 	}
 
@@ -87,7 +87,6 @@ func (pin *gpioPin) getGpioAddress() uint16 {
 	default:
 		return pin.Address
 	}
-
 }
 
 // Set sets the state of the pin on or off.
@@ -122,6 +121,7 @@ func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interfa
 	// and writing back, we can leverage the ioctl command to modify 1 bit
 	command := SPIValue{i16uAddress: gpioAddress, i8uBit: gpioBit, i8uValue: val}
 	pin.ControlChip.logger.Debugf("Command: %#v", command)
+	//nolint:gosec
 	err := pin.ControlChip.ioCtl(uintptr(KB_SET_VALUE), unsafe.Pointer(&command))
 	if err != 0 {
 		return err
@@ -158,7 +158,6 @@ func (pin *gpioPin) Get(ctx context.Context, extra map[string]interface{}) (bool
 
 // PWM gets the pin's given duty cycle.
 func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (float64, error) {
-
 	if !pin.initialized {
 		return 0, errors.New("pin not initialized")
 	}
@@ -268,7 +267,7 @@ func stepSizeToFreq(step []byte) uint {
 	return 0
 }
 
-// SetPWMFreq sets the given pin to the given PWM frequency. For the Rev-Pi this must be configured in PiCtory
+// SetPWMFreq sets the given pin to the given PWM frequency. For the Rev-Pi this must be configured in PiCtory.
 func (pin *gpioPin) SetPWMFreq(ctx context.Context, freqHz uint, extra map[string]interface{}) error {
 	if !pin.initialized {
 		return errors.New("pin not initialized")
@@ -277,22 +276,22 @@ func (pin *gpioPin) SetPWMFreq(ctx context.Context, freqHz uint, extra map[strin
 	return errors.New("PWM Frequency must be set in PiCtory")
 }
 
-// pins at 70 or 71 + inputOffset
+// pins at 70 or 71 + inputOffset.
 func (pin *gpioPin) isOutputWord() bool {
 	return pin.Address == pin.outputOffset || pin.Address == pin.outputOffset+1
 }
 
-// pins with an offset of 72 to 87 + inputOffset
+// pins with an offset of 72 to 87 + inputOffset.
 func (pin *gpioPin) isOutputPWM() bool {
 	return pin.Address > pin.outputOffset+outputWordToPWMOffset && pin.Address < pin.inputOffset+dioMemoryOffset
 }
 
-// pins at 0 or 1 + inputOffset
+// pins at 0 or 1 + inputOffset.
 func (pin *gpioPin) isInputWord() bool {
 	return pin.Address == pin.inputOffset || pin.Address == pin.inputOffset+1
 }
 
-// pins at 6 to 70 + inputOffset
+// pins at 6 to 70 + inputOffset.
 func (pin *gpioPin) isInputCounter() bool {
 	return pin.Address >= pin.inputOffset+inputWordToCounterOffset && pin.Address < pin.outputOffset
 }

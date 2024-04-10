@@ -5,8 +5,10 @@ import (
 	"go.viam.com/rdk/utils"
 )
 
-var Model = resource.NewModel("viam-labs", "kunbus", "revolutionpi")
+// The model triplet for the rev-pi board.
+var Model = resource.NewModel("viam-labs", "kunbus", "revolution_pi")
 
+// The config for the rev-pi board.
 type Config struct {
 	resource.TriviallyValidateConfig
 	Attributes utils.AttributeMap `json:"attributes,omitempty"`

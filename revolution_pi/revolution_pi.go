@@ -1,6 +1,6 @@
 //go:build linux
 
-// Package revolution_pi implements the Revolution Pi board GPIO pins.
+// Package revolution-pi implements the Revolution Pi board GPIO pins.
 package revolution_pi
 
 import (
@@ -20,7 +20,7 @@ import (
 	"go.viam.com/rdk/resource"
 )
 
-type revolutionPiBoard struct {
+type revolution_piBoard struct {
 	resource.Named
 	resource.TriviallyReconfigurable
 
@@ -48,8 +48,9 @@ func newBoard(
 	conf resource.Config,
 	logger logging.Logger,
 ) (board.Board, error) {
-	logger.Info("Starting RevolutionPi Driver v0.0.5")
+	logger.Info("Starting revolution_pi Driver v0.0.5")
 	devPath := filepath.Join("/dev", "piControl0")
+	//nolint:gosec
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
@@ -57,7 +58,7 @@ func newBoard(
 	}
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 	gpioChip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
-	b := revolutionPiBoard{
+	b := revolution_piBoard{
 		Named:         conf.ResourceName().AsNamed(),
 		logger:        logger,
 		cancelCtx:     cancelCtx,
@@ -76,7 +77,7 @@ func newBoard(
 	return &b, nil
 }
 
-func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
+func (b *revolution_piBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
 	reader, err := b.controlChip.GetAnalogInput(name)
 	if err != nil {
 		b.logger.Error(err)
@@ -86,39 +87,39 @@ func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader,
 	return reader, true
 }
 
-func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
+func (b *revolution_piBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
 	return nil, false // Digital interrupts aren't supported.
 }
 
-func (b *revolutionPiBoard) AnalogReaderNames() []string {
+func (b *revolution_piBoard) AnalogReaderNames() []string {
 	return nil
 }
 
-func (b *revolutionPiBoard) DigitalInterruptNames() []string {
+func (b *revolution_piBoard) DigitalInterruptNames() []string {
 	return nil
 }
 
-func (b *revolutionPiBoard) GPIOPinNames() []string {
+func (b *revolution_piBoard) GPIOPinNames() []string {
 	return nil
 }
 
-func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error) {
+func (b *revolution_piBoard) GPIOPinByName(pinName string) (board.GPIOPin, error) {
 	return b.controlChip.GetGPIOPin(pinName)
 }
 
-func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
+func (b *revolution_piBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
 	return &commonpb.BoardStatus{}, nil
 }
 
-func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
+func (b *revolution_piBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
 	return grpc.UnimplementedError
 }
 
-func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value int32, extra map[string]interface{}) error {
+func (b *revolution_piBoard) WriteAnalog(ctx context.Context, pin string, value int32, extra map[string]interface{}) error {
 	return nil
 }
 
-func (b *revolutionPiBoard) Close(ctx context.Context) error {
+func (b *revolution_piBoard) Close(ctx context.Context) error {
 	b.mu.Lock()
 	b.logger.Info("Closing RevPi board.")
 	defer b.mu.Unlock()
@@ -132,7 +133,7 @@ func (b *revolutionPiBoard) Close(ctx context.Context) error {
 	return nil
 }
 
-func (b *revolutionPiBoard) DoCommand(ctx context.Context,
+func (b *revolution_piBoard) DoCommand(ctx context.Context,
 	req map[string]interface{},
 ) (map[string]interface{}, error) {
 	resp := make(map[string]interface{})

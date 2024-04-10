@@ -1,3 +1,4 @@
+// Package revolution-pi implements the Revolution Pi board GPIO pins.
 package revolution_pi
 
 func Str32(chars [32]byte) string {
