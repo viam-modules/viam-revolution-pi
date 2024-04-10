@@ -101,7 +101,7 @@ func (g *gpioChip) ioCtlReturns(command uintptr, message unsafe.Pointer) (uintpt
 func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
 	b := make([]byte, 1)
 	n, err := g.fileHandle.ReadAt(b, address)
-	g.logger.Infof("Read %#v bytes", b)
+	g.logger.Debugf("Read %#v bytes", b)
 	if n != 1 {
 		return false, fmt.Errorf("expected 1 byte, got %#v", b)
 	}
@@ -139,7 +139,7 @@ func (g *gpioChip) findDIODevice(gpioAddress uint16) (SDeviceInfo, error) {
 		// need to test devOffsetLower with multiple DIO devices
 		devOffsetLower := dev.i16uInputOffset
 		devOffsetUpper := dev.i16uInputOffset + dev.i16uOutputLength + dev.i16uInputLength + dev.i16uConfigLength
-		if gpioAddress > devOffsetLower && gpioAddress < devOffsetUpper {
+		if gpioAddress >= devOffsetLower && gpioAddress < devOffsetUpper {
 			return dev, nil
 		}
 	}
