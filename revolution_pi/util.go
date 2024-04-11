@@ -1,7 +1,7 @@
-// Package revolution-pi implements the Revolution Pi board GPIO pins.
+// Package revolution_pi implements the Revolution Pi board GPIO pins.
 package revolution_pi
 
-func Str32(chars [32]byte) string {
+func str32(chars [32]byte) string {
 	i := 0
 	var c byte
 	for i, c = range chars {
@@ -12,7 +12,7 @@ func Str32(chars [32]byte) string {
 	return string(chars[:i])
 }
 
-func Char32(str string) (chars [32]byte) {
+func char32(str string) (chars [32]byte) {
 	copy(chars[:31], str)
 	return
 }

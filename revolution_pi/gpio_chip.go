@@ -21,13 +21,13 @@ type gpioChip struct {
 }
 
 func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
-	pin := SPIVariable{strVarName: Char32(pinName)}
+	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
 	g.logger.Debugf("Found GPIO pin: %#v", pin)
-	gpioPin := gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
+	gpioPin := gpioPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
 	err = gpioPin.initialize()
 	if err != nil {
 		return nil, err
@@ -36,13 +36,13 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 }
 
 func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
-	pin := SPIVariable{strVarName: Char32(pinName)}
+	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
 	g.logger.Debugf("Found Analog pin: %#v", pin)
-	return &analogPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
+	return &analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
@@ -112,9 +112,8 @@ func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
 	}
 	if (b[0]>>bitPosition)&1 == 1 {
 		return true, nil
-	} else {
-		return false, nil
 	}
+	return false, nil
 }
 
 func (g *gpioChip) writeValue(address int64, b []byte) error {

@@ -56,7 +56,8 @@ func (pin *gpioPin) initialize() error {
 		// so we convert the pin address into the matching bits, where PWM_1 corresponds to bit 0.
 		// Output pins start at dio.i16uOutputOffset+2, so we can subtract pin address by that amount to get the correct bit
 		pwmActiveBitPosition := uint8(pin.Address - dio.i16uOutputOffset - outputWordToPWMOffset)
-		val, err = pin.ControlChip.getBitValue(int64(dio.i16uInputOffset+outputPWMActiveOffset+uint16(pwmActiveBitPosition/8)), pwmActiveBitPosition%8)
+		val, err = pin.ControlChip.getBitValue(int64(dio.i16uInputOffset+outputPWMActiveOffset+uint16(pwmActiveBitPosition/8)),
+			pwmActiveBitPosition%8)
 		if err != nil {
 			return err
 		}
@@ -284,11 +285,6 @@ func (pin *gpioPin) isOutputWord() bool {
 // pins with an offset of 72 to 87 + inputOffset.
 func (pin *gpioPin) isOutputPWM() bool {
 	return pin.Address > pin.outputOffset+outputWordToPWMOffset && pin.Address < pin.inputOffset+dioMemoryOffset
-}
-
-// pins at 0 or 1 + inputOffset.
-func (pin *gpioPin) isInputWord() bool {
-	return pin.Address == pin.inputOffset || pin.Address == pin.inputOffset+1
 }
 
 // pins at 6 to 70 + inputOffset.
