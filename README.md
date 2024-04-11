@@ -1,2 +1,27 @@
 # viam-revolution-pi
 A modular component for Viam that adds support for the Revolution Pi PLC platform
+
+## setup
+
+Please follow the [Revolution Pi](https://revolutionpi.com/en/tutorials/quick-start-guide) setup documentation to configure your Revolution Pi. The majority of the configuration for a Revolution Pi occurs within [PiCtory](https://revolutionpi.com/en/tutorials/what-is-pictory).
+
+### GPIO and PWM
+
+The family of boards used for digital input and output are the [DIO modules](https://revolutionpi.com/en/tutorials/overview-revpi-io-modules). These have a set of GPIO pins to use with PWMs and counters. To configure an Output pin as a PWM pin, you must set the corresponding bit for that pin in the 'OutputPWMActive' Word in PiCtory. Because OutputPWMActive is stored in memory, you have to update the field in PiCtory, then update the Start-Config that the rev-pi uses and restart the board. The PWM frequency can also only be configured in PiCtory by updating the 'OutputPWMFrequency' field. Every PWM pin will use the same frequency.
+
+Interrupts and counters are not currently supported on the board
+
+#### example enabling a PWM pin
+
+If you want to enable pins O_3 and O_9 as a PWM pins, take the following steps
+
+ 1. first must update the 'OutputPWMActive' field in PiCtory
+    - The binary representation for enabling these two pins would be represented as 0b0000000100000100, with the decimal equivalent being 260
+ 2. Then you save your changes in PiCtory as the latest Start-Config
+ 3. Restart your Revolution Pi
+
+This will enable pins O_3 and O_9 as PWM pins, which can be used with Viam's APIs. This also means that O_3 and O_9 can no longer be used as normal GPIO pins.
+
+### ADC and DAC
+
+To have ADC and DAC you need an [AIO Module](https://revolutionpi.com/en/tutorials/overview-aio) attached to your Revolution Pi. ADC and DAC are currently not supported in this module.
