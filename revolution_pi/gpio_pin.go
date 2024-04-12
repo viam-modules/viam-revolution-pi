@@ -46,8 +46,10 @@ func (pin *gpioPin) initialize() error {
 
 	// for output gpio pins pwm can be enabled, so we should check for that
 	if pin.isOutputWord() {
-		// if the normal gpio output is given, use the bit position to check if we are in pwm mode
-		val, err = pin.ControlChip.getBitValue(int64(dio.i16uInputOffset+outputPWMActiveOffset+pin.Address%dio.i16uOutputOffset), pin.BitPosition)
+		// if the normal gpio output is given, use the bit position to check if we are in pwm mode. First we need
+		// We also need to determine which address to check.
+		pwmActiveAddress := int64(pin.Address - dio.i16uOutputOffset + dio.i16uInputOffset + outputPWMActiveOffset)
+		val, err = pin.ControlChip.getBitValue(pwmActiveAddress, pin.BitPosition)
 		if err != nil {
 			return err
 		}
@@ -55,9 +57,9 @@ func (pin *gpioPin) initialize() error {
 		// we want to read a bit from OutputPWMActive WORD to see if pwm is enabled,
 		// so we convert the pin address into the matching bits, where PWM_1 corresponds to bit 0.
 		// Output pins start at dio.i16uOutputOffset+2, so we can subtract pin address by that amount to get the correct bit
-		pwmActiveBitPosition := uint8(pin.Address - dio.i16uOutputOffset - outputWordToPWMOffset)
-		val, err = pin.ControlChip.getBitValue(int64(dio.i16uInputOffset+outputPWMActiveOffset+uint16(pwmActiveBitPosition/8)),
-			pwmActiveBitPosition%8)
+		pwmActiveBitPosition := uint8(pin.Address - dio.i16uOutputOffset - outputWordToPWMOffset) // between 0 and 16
+		pwmActiveAddress := int64(dio.i16uInputOffset + outputPWMActiveOffset + uint16(pwmActiveBitPosition>>3))
+		val, err = pin.ControlChip.getBitValue(int64(pwmActiveAddress), pwmActiveBitPosition%8)
 		if err != nil {
 			return err
 		}
@@ -70,21 +72,29 @@ func (pin *gpioPin) initialize() error {
 	return nil
 }
 
-// Get the memory address to use for modifying the PWM duty cycle.
+// Get the memory address to use for modifying the PWM duty cycle. This should Only be used when a PWM
+// request is made to a GPIO output pin.
 func (pin *gpioPin) getPwmAddress() uint16 {
-	// The address for the pin is either 0 or 1 + the offset,
-	// the bit position is used to figure out the offset from the base address of 2 + offset for PWM
-	return pin.Address + 7*pin.Address%pin.outputOffset + outputWordToPWMOffset + (uint16(pin.BitPosition))
+	// The address for the Output Word pin is either 0 or 1 + outputOffset
+	firstOrSecondHalf := 7 * (pin.Address - pin.outputOffset)
+	// the bit position then gets used to determine which PWM pin should be used
+	return pin.Address + outputWordToPWMOffset + firstOrSecondHalf + (uint16(pin.BitPosition))
 }
 
 // Get the memory address to use for modifying the pin state (on/off).
 func (pin *gpioPin) getGpioAddress() uint16 {
 	switch {
+	// if a PWM pin is given for GPIO behaviors
 	case pin.isOutputPWM():
-		return pin.outputOffset + (pin.Address-outputWordToPWMOffset)%pin.outputOffset/8
+		// subtract the offsets from the Address from the PWM address,
+		// then shift by 3 to get the 0 or 1 address
+		return pin.outputOffset + (pin.Address-outputWordToPWMOffset-pin.outputOffset)>>3
+	// if an Input Counter pin is given for GPIO behaviors
 	case pin.isInputCounter():
-		// shift the input counter to be a value from 0 to 63, then divide by 32 to get the 0 or 1 address
-		return pin.inputOffset + (pin.Address-pin.inputOffset-inputWordToCounterOffset)/32
+		// subtract the offsets from the Address of the input counter to be a value from 0 to 63,
+		// then shift by 5 to get the 0 or 1 address
+		return pin.inputOffset + (pin.Address-pin.inputOffset-inputWordToCounterOffset)>>5
+	// by default we are a GPIO pin
 	default:
 		return pin.Address
 	}
@@ -101,11 +111,12 @@ func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interfa
 		val = uint8(1)
 	}
 
+	// Error if we are not a pin that can support GPIO Outputs
 	if !pin.isOutputPWM() && !pin.isOutputWord() {
 		return fmt.Errorf("cannot set pin state, Pin %s is not a digital output pin", pin.Name)
 	}
 
-	// error if using PWM mode
+	// error if PWM is enabled for the pin in question
 	if pin.pwmMode {
 		return fmt.Errorf("cannot set pin state, Pin %s is configured as PWM", pin.Name)
 	}
@@ -113,9 +124,9 @@ func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interfa
 	gpioAddress := pin.getGpioAddress()
 	gpioBit := pin.BitPosition
 
-	// if someone used the PWM pin name, get the GPIO address of the pin
+	// if someone used the PWM pin name, get the bit for the GPIO output
 	if !pin.isOutputWord() {
-		gpioBit = uint8((pin.Address-2)%pin.outputOffset) % 8
+		gpioBit = uint8(pin.Address-outputWordToPWMOffset-pin.outputOffset) % 8
 	}
 
 	// Because there could be a race in reading the byte with pin states, mutating,
@@ -143,16 +154,15 @@ func (pin *gpioPin) Get(ctx context.Context, extra map[string]interface{}) (bool
 	gpioBit := pin.BitPosition
 
 	if pin.isOutputPWM() {
-		// if someone used the PWM pin name, get the get the bit for the pin
+		// if someone used the PWM pin name, get the bit for the GPIO pin
 		gpioBit = uint8((pin.Address-outputWordToPWMOffset)%pin.outputOffset) % 8
 	} else if pin.isInputCounter() {
-		// if someone used the Counter pin name, get the get the bit for the pin
+		// if someone used the Counter pin name, get the bit for the GPIO pin
 		// get the address into 4 byte chunks, then mod 8 for the bit location
-		gpioBit = uint8((pin.Address-inputWordToCounterOffset)%pin.inputOffset) / 4 % 8
+		gpioBit = uint8(pin.Address-inputWordToCounterOffset-pin.inputOffset) >> 2 % 8
 	}
 
-	pin.ControlChip.logger.Debugf("Reading from %d", gpioAddress)
-	pin.ControlChip.logger.Debugf("Reading from bit %d", gpioBit)
+	pin.ControlChip.logger.Debugf("Reading from Address %d, bit %d", gpioAddress, gpioBit)
 
 	return pin.ControlChip.getBitValue(int64(gpioAddress), gpioBit)
 }
@@ -165,7 +175,8 @@ func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (floa
 	if !pin.isOutputPWM() && !pin.isOutputWord() {
 		return 0, fmt.Errorf("cannot get PWM, Pin %s is not a PWM pin", pin.Name)
 	}
-	// if the pin isn't in PWM mode, throw an error
+
+	// if the pin isn't configured for PWM mode, throw an error
 	if !pin.pwmMode {
 		return 0, fmt.Errorf("cannot get PWM, Pin %s is not configured for PWM", pin.Name)
 	}
@@ -201,7 +212,7 @@ func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[
 		return fmt.Errorf("cannot set PWM, Pin %s is not a PWM pin", pin.Name)
 	}
 
-	// if the pin isn't in PWM mode, throw an error
+	// if the pin isn't configured for PWM mode, throw an error
 	if !pin.pwmMode {
 		return fmt.Errorf("cannot set PWM, Pin %s is not configured for PWM", pin.Name)
 	}
@@ -284,7 +295,7 @@ func (pin *gpioPin) isOutputWord() bool {
 
 // pins with an offset of 72 to 87 + inputOffset.
 func (pin *gpioPin) isOutputPWM() bool {
-	return pin.Address > pin.outputOffset+outputWordToPWMOffset && pin.Address < pin.inputOffset+dioMemoryOffset
+	return pin.Address >= pin.outputOffset+outputWordToPWMOffset && pin.Address < pin.inputOffset+dioMemoryOffset
 }
 
 // pins at 6 to 70 + inputOffset.

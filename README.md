@@ -15,7 +15,7 @@ Interrupts and counters are not currently supported on the board
 
 If you want to enable pins O_3 and O_9 as a PWM pins, take the following steps
 
- 1. first must update the 'OutputPWMActive' field in PiCtory
+ 1. First update the 'OutputPWMActive' field in PiCtory
     - The binary representation for enabling these two pins would be represented as 0b0000000100000100, with the decimal equivalent being 260
  2. Then you save your changes in PiCtory as the latest Start-Config
  3. Restart your Revolution Pi
@@ -24,4 +24,4 @@ This will enable pins O_3 and O_9 as PWM pins, which can be used with Viam's API
 
 ### ADC and DAC
 
-To have ADC and DAC you need an [AIO Module](https://revolutionpi.com/en/tutorials/overview-aio) attached to your Revolution Pi. ADC and DAC are currently not supported in this module.
+ADC and DAC are currently not supported in this module. See the [AIO Module](https://revolutionpi.com/en/tutorials/overview-aio) For more information on the Revolution Pi's capabilities.

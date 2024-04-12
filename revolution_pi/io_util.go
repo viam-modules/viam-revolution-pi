@@ -75,13 +75,12 @@ type SDeviceInfo struct {
 	i8uReserve       [30]uint8 // space for future extensions without changing the size of the struct
 }
 
+// isDIO checks whether the module is a DIO, DO, or DI module, which can be used with our GPIO related apis
 func (dev *SDeviceInfo) isDIO() bool {
-	if dev.i16uModuleType == 96 || dev.i16uModuleType == 97 || dev.i16uModuleType == 98 {
-		return true
-	}
-	return false
+	return dev.i16uModuleType == 96 || dev.i16uModuleType == 97 || dev.i16uModuleType == 98
 }
 
+// getModuleName gets the module name based on the module type
 func getModuleName(moduleType uint16) string {
 	switch {
 	case moduleType == 95:
