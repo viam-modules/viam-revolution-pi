@@ -13,7 +13,7 @@ Interrupts and counters are not currently supported on the board
 
 #### example enabling a PWM pin
 
-If you want to enable pins O_3 and O_9 as a PWM pins, take the following steps
+If you want to enable pins O_3 and O_9 as a PWM pin, take the following steps
 
  1. First update the 'OutputPWMActive' field in PiCtory
     - The binary representation for enabling these two pins would be represented as 0b0000000100000100, with the decimal equivalent being 260

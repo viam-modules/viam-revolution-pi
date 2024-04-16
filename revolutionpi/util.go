@@ -1,3 +1,5 @@
+//go:build linux
+
 // Package revolutionpi implements the Revolution Pi board GPIO pins.
 package revolutionpi
 
