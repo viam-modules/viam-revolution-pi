@@ -264,6 +264,8 @@ func (pin *gpioPin) PWMFreq(ctx context.Context, extra map[string]interface{}) (
 	return stepSizeToFreq(b), nil
 }
 
+// stepSizeToFreq returns the frequency based on the step size returned from the outputPWMFrequency address
+// see documentation for more information.
 func stepSizeToFreq(step []byte) uint {
 	// b only has one byte
 	switch step[0] {
