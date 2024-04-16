@@ -1,3 +1,4 @@
+// package main implements the Revolution Pi module that is supported by Viam
 package main
 
 import (
@@ -7,7 +8,7 @@ import (
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/module"
 	"go.viam.com/utils"
-	"viam-labs/viam-revolution-pi/revolution_pi"
+	"viam-labs/viam-revolution-pi/revolutionpi"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 		return err
 	}
 
-	err = customModule.AddModelFromRegistry(ctx, board.API, revolution_pi.Model)
+	err = customModule.AddModelFromRegistry(ctx, board.API, revolutionpi.Model)
 	if err != nil {
 		return err
 	}

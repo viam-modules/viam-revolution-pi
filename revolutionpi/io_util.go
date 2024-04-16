@@ -1,4 +1,5 @@
-package revolution_pi
+// Package revolutionpi implements the Revolution Pi.
+package revolutionpi
 
 func ioctlAddress(v int) int {
 	kbIocMagic := int('K')
@@ -6,32 +7,38 @@ func ioctlAddress(v int) int {
 	return magic
 }
 
-const PICONTROL_NOT_CONNECTED = 0x8000
+// is the hex output received when a board is not connected.
+const piControlNotConnected = 0x8000
 
+// leaving these variables in as potential options to interface with the Revolution Pi
+//
+//nolint:unused
 var (
-	KB_CMD1                   = ioctlAddress(10) // for test only
-	KB_CMD2                   = ioctlAddress(11) // for test only
-	KB_RESET                  = ioctlAddress(12) // reset the piControl driver including the config file
-	KB_GET_DEVICE_INFO_LIST   = ioctlAddress(13) // get the device info of all detected devices
-	KB_GET_DEVICE_INFO        = ioctlAddress(14) // get the device info of one device
-	KB_GET_VALUE              = ioctlAddress(15) // get the value of one bit in the process image
-	KB_SET_VALUE              = ioctlAddress(16) // set the value of one bit in the process image
-	KB_FIND_VARIABLE          = ioctlAddress(17) // find a variable defined in piCtory
-	KB_SET_EXPORTED_OUTPUTS   = ioctlAddress(18) // copy the exported outputs from a application process image to the real process image
-	KB_UPDATE_DEVICE_FIRMWARE = ioctlAddress(19) // try to update the firmware of connected devices
-	KB_DIO_RESET_COUNTER      = ioctlAddress(20) // set a counter or encoder to 0
-	KB_GET_LAST_MESSAGE       = ioctlAddress(21) // copy the last error message
-	KB_STOP_IO                = ioctlAddress(22) // stop/start IO communication, can be used for I/O simulation
-	KB_CONFIG_STOP            = ioctlAddress(23) // for download of configuration to Master Gateway: stop IO communication completely
-	KB_CONFIG_SEND            = ioctlAddress(24) // for download of configuration to Master Gateway: download config data
-	KB_CONFIG_START           = ioctlAddress(25) // for download of configuration to Master Gateway: restart IO communication
-	KB_SET_OUTPUT_WATCHDOG    = ioctlAddress(26) // activate a watchdog for this handle. If write is not called for a given period all outputs are set to 0
-	KB_SET_POS                = ioctlAddress(27) // set the f_pos, the unsigned int * is used to interpret the pos value
-	KB_AIO_CALIBRATE          = ioctlAddress(28)
+	kbCmd1                 = ioctlAddress(10) // for test only
+	kbCmd2                 = ioctlAddress(11) // for test only
+	kbReset                = ioctlAddress(12) // reset the piControl driver including the config file
+	kbGetDeviceInfoList    = ioctlAddress(13) // get the device info of all detected devices
+	kbGetDeviceInfo        = ioctlAddress(14) // get the device info of one device
+	kbGetValue             = ioctlAddress(15) // get the value of one bit in the process image
+	kbSetValue             = ioctlAddress(16) // set the value of one bit in the process image
+	kbFindVariable         = ioctlAddress(17) // find a variable defined in piCtory
+	kbSetExportedOutputs   = ioctlAddress(18) // copy the exported outputs from a application process image to the real process image
+	kbUpdateDeviceFirmware = ioctlAddress(19) // try to update the firmware of connected devices
+	kbDIOResetCounter      = ioctlAddress(20) // set a counter or encoder to 0
+	kbGetLastMessage       = ioctlAddress(21) // copy the last error message
+	kbStopIO               = ioctlAddress(22) // stop/start IO communication, can be used for I/O simulation
+	kbConfigStop           = ioctlAddress(23) // for download of configuration to Master Gateway: stop IO communication completely
+	kbConfigSend           = ioctlAddress(24) // for download of configuration to Master Gateway: download config data
+	kbConfigStart          = ioctlAddress(25) // for download of configuration to Master Gateway: restart IO communication
+	// activate a watchdog for this handle. If write is not called for a given period all outputs are set to 0.
+	kbSetOutputWatchdog = ioctlAddress(26)
+	kbSetPos            = ioctlAddress(27) // set the f_pos, the unsigned int * is used to interpret the pos value
+	kbAIOCalibrate      = ioctlAddress(28)
+	kbWaitForEvent      = ioctlAddress(50) // wait for an event. This call is normally blocking
 )
 
-var KB_WAIT_FOR_EVENT = ioctlAddress(50) // wait for an event. This call is normally blocking
-
+// SPIVariable is the struct representing an address when reading from the board.
+// use kbFindVariable with ioctl to populate the struct.
 type SPIVariable struct {
 	strVarName  [32]byte // Variable name
 	i16uAddress uint16   // Address of the byte in the process image
@@ -39,19 +46,17 @@ type SPIVariable struct {
 	i16uLength  uint16   // length of the variable in bits. Possible values are 1, 8, 16 and 32
 }
 
+// SPIValue is the struct representing a value at an address when reading from the board.
+// use kbGetValue or kbSetValue with ioctl to read from or write to a bit.
 type SPIValue struct {
 	i16uAddress uint16 // Address of the byte in the process image
 	i8uBit      uint8  // 0-7 bit position, >= 8 whole byte
 	i8uValue    uint8  // Value: 0/1 for bit access, whole byte otherwise
 }
 
-//nolint:unused
-type PwmStateRequest struct {
-	i16uAddress uint16 // Address of the byte in the process image
-	i8uBit      uint8  // 0-7 bit position, >= 8 whole byte
-	i8uValue    uint16 // Value: 0/1 for bit access, whole byte otherwise
-}
-
+// SDeviceInfo is a struct representing the devices being used by the Revolution Pi module.
+// use kbGetDeviceInfoList with ioctl to populate a list of these
+//
 //nolint:unused
 type SDeviceInfo struct {
 	i8uAddress       uint8     // Address of module in current configuration
@@ -75,12 +80,12 @@ type SDeviceInfo struct {
 	i8uReserve       [30]uint8 // space for future extensions without changing the size of the struct
 }
 
-// isDIO checks whether the module is a DIO, DO, or DI module, which can be used with our GPIO related apis
+// isDIO checks whether the module is a DIO, DO, or DI module, which can be used with our GPIO related apis.
 func (dev *SDeviceInfo) isDIO() bool {
 	return dev.i16uModuleType == 96 || dev.i16uModuleType == 97 || dev.i16uModuleType == 98
 }
 
-// getModuleName gets the module name based on the module type
+// getModuleName gets the module name based on the module type.
 func getModuleName(moduleType uint16) string {
 	switch {
 	case moduleType == 95:

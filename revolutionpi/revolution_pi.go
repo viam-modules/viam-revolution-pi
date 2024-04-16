@@ -1,7 +1,7 @@
 //go:build linux
 
-// Package revolution_pi implements the Revolution Pi board GPIO pins.
-package revolution_pi
+// Package revolutionpi implements the Revolution Pi board GPIO pins.
+package revolutionpi
 
 import (
 	"context"

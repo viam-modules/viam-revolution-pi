@@ -1,7 +1,7 @@
 //go:build linux
 
-// Package revolution_pi implements the Revolution Pi board GPIO pins.
-package revolution_pi
+// Package revolutionpi implements the Revolution Pi board GPIO pins.
+package revolutionpi
 
 import (
 	"context"
@@ -61,7 +61,7 @@ func (pin *gpioPin) initialize() error {
 		// Output pins start at dio.i16uOutputOffset+2, so we can subtract pin address by that amount to get the correct bit
 		pwmActiveBitPosition := uint8(pin.Address - dio.i16uOutputOffset - outputWordToPWMOffset) // between 0 and 16
 		pwmActiveAddress := int64(dio.i16uInputOffset + outputPWMActiveOffset + uint16(pwmActiveBitPosition>>3))
-		val, err = pin.ControlChip.getBitValue(int64(pwmActiveAddress), pwmActiveBitPosition%8)
+		val, err = pin.ControlChip.getBitValue(pwmActiveAddress, pwmActiveBitPosition%8)
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interfa
 	command := SPIValue{i16uAddress: gpioAddress, i8uBit: gpioBit, i8uValue: val}
 	pin.ControlChip.logger.Debugf("Command: %#v", command)
 	//nolint:gosec
-	err := pin.ControlChip.ioCtl(uintptr(KB_SET_VALUE), unsafe.Pointer(&command))
+	err := pin.ControlChip.ioCtl(uintptr(kbSetValue), unsafe.Pointer(&command))
 	if err != 0 {
 		return err
 	}
