@@ -17,16 +17,17 @@ type gpioChip struct {
 	dev        string
 	logger     logging.Logger
 	fileHandle *os.File
+	dioDevices []SDeviceInfo
 }
 
 func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
-	pin := SPIVariable{strVarName: Char32(pinName)}
+	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
 	g.logger.Debugf("Found GPIO pin: %#v", pin)
-	gpioPin := gpioPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
+	gpioPin := gpioPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
 	err = gpioPin.initialize()
 	if err != nil {
 		return nil, err
@@ -35,17 +36,18 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 }
 
 func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
-	pin := SPIVariable{strVarName: Char32(pinName)}
+	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
 	g.logger.Debugf("Found Analog pin: %#v", pin)
-	return &analogPin{Name: Str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
+	return &analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 	g.logger.Debugf("Looking for address of %#v", pin)
+	//nolint:gosec
 	err := g.ioCtl(uintptr(KB_FIND_VARIABLE), unsafe.Pointer(pin))
 	if err != 0 {
 		e := fmt.Errorf("failed to get pin address info %v failed: %w", g.dev, err)
@@ -57,6 +59,8 @@ func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 
 func (g *gpioChip) showDeviceList() error {
 	var deviceInfoList [255]SDeviceInfo
+	g.dioDevices = []SDeviceInfo{}
+	//nolint:gosec
 	cnt, _, err := g.ioCtlReturns(uintptr(KB_GET_DEVICE_INFO_LIST), unsafe.Pointer(&deviceInfoList))
 	if err != 0 {
 		e := fmt.Errorf("failed to retrieve device info list: %d", -int(cnt))
@@ -67,6 +71,10 @@ func (g *gpioChip) showDeviceList() error {
 	for i := 0; i < int(cnt); i++ {
 		if deviceInfoList[i].i8uActive != 0 {
 			g.logger.Debugf("device %d is of type %s is active", i, getModuleName(deviceInfoList[i].i16uModuleType))
+			if deviceInfoList[i].isDIO() {
+				g.logger.Info("device info: ", deviceInfoList[i])
+				g.dioDevices = append(g.dioDevices, deviceInfoList[i])
+			}
 		} else {
 			checkConnected := deviceInfoList[i].i16uModuleType&PICONTROL_NOT_CONNECTED == PICONTROL_NOT_CONNECTED
 			if checkConnected {
@@ -104,15 +112,14 @@ func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
 	}
 	if (b[0]>>bitPosition)&1 == 1 {
 		return true, nil
-	} else {
-		return false, nil
 	}
+	return false, nil
 }
 
 func (g *gpioChip) writeValue(address int64, b []byte) error {
-	g.logger.Debugf("Writing %#v to %v", b, address)
+	g.logger.Debugf("Writing %#d to %v", b, address)
 	n, err := g.fileHandle.WriteAt(b, address)
-	g.logger.Debugf("Wrote %#v byte(s), n: %v", b, n)
+	g.logger.Debugf("Wrote %#d byte(s), n: %d", b, n)
 	if err != nil {
 		return err
 	}
@@ -125,4 +132,16 @@ func (g *gpioChip) writeValue(address int64, b []byte) error {
 func (g *gpioChip) Close() error {
 	err := g.fileHandle.Close()
 	return err
+}
+
+func (g *gpioChip) findDIODevice(gpioAddress uint16) (SDeviceInfo, error) {
+	for _, dev := range g.dioDevices {
+		// need to test devOffsetLower with multiple DIO devices
+		devOffsetLower := dev.i16uInputOffset
+		devOffsetUpper := dev.i16uInputOffset + dev.i16uOutputLength + dev.i16uInputLength + dev.i16uConfigLength
+		if gpioAddress >= devOffsetLower && gpioAddress < devOffsetUpper {
+			return dev, nil
+		}
+	}
+	return SDeviceInfo{}, fmt.Errorf("unable to find device for pin %d", gpioAddress)
 }

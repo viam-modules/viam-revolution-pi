@@ -50,6 +50,7 @@ func newBoard(
 ) (board.Board, error) {
 	logger.Info("Starting RevolutionPi Driver v0.0.5")
 	devPath := filepath.Join("/dev", "piControl0")
+	//nolint:gosec
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
