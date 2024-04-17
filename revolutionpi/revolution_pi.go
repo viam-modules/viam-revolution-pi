@@ -78,6 +78,10 @@ func newBoard(
 	return &b, nil
 }
 
+// StreamTicks starts a stream of digital interrupt ticks.
+func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []string, ch chan board.Tick, extra map[string]interface{}) error {
+	return nil
+}
 func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
 	reader, err := b.controlChip.GetAnalogInput(name)
 	if err != nil {

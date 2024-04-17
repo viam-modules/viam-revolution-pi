@@ -29,6 +29,15 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	}
 	g.logger.Debugf("Found GPIO pin: %#v", pin)
 	gpioPin := gpioPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
+	dio, err := gpioPin.ControlChip.findDIODevice(gpioPin.Address)
+	if err != nil {
+		gpioPin.ControlChip.logger.Debug("pin is not from the DIO")
+	}
+
+	// if the requested pin is checking the Output WORD. The WORD takes up to 2 bytes
+	gpioPin.outputOffset = dio.i16uOutputOffset
+	gpioPin.inputOffset = dio.i16uInputOffset
+
 	err = gpioPin.initialize()
 	if err != nil {
 		return nil, err
@@ -37,12 +46,13 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 }
 
 func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
+	g.logger.Debugf("Getting Analog pin: %#s", pinName)
 	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
-	g.logger.Debugf("Found Analog pin: %#v", pin)
+	g.logger.Infof("Found Analog pin: %#v", pin)
 	return &analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
 }
 
