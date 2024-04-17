@@ -1,7 +1,7 @@
 //go:build linux
 
-// Package revolution_pi implements the Revolution Pi board GPIO pins.
-package revolution_pi
+// Package revolutionpi implements the Revolution Pi board GPIO pins.
+package revolutionpi
 
 import (
 	"context"
@@ -49,8 +49,9 @@ func newBoard(
 	logger logging.Logger,
 ) (board.Board, error) {
 	logger.Info("Starting RevolutionPi Driver v0.0.5")
+
 	devPath := filepath.Join("/dev", "piControl0")
-	//nolint:gosec
+	devPath = filepath.Clean(devPath)
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)

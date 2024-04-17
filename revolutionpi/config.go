@@ -1,4 +1,7 @@
-package revolution_pi
+//go:build linux
+
+// Package revolutionpi implements the Revolution Pi.
+package revolutionpi
 
 import (
 	"go.viam.com/rdk/resource"

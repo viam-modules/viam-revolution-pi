@@ -1,5 +1,7 @@
-// Package revolution_pi implements the Revolution Pi board GPIO pins.
-package revolution_pi
+//go:build linux
+
+// Package revolutionpi implements the Revolution Pi board GPIO pins.
+package revolutionpi
 
 func str32(chars [32]byte) string {
 	i := 0

@@ -1,6 +1,7 @@
 //go:build linux
 
-package revolution_pi
+// Package revolutionpi implements the Revolution Pi.
+package revolutionpi
 
 import (
 	"fmt"
@@ -48,7 +49,7 @@ func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 	g.logger.Debugf("Looking for address of %#v", pin)
 	//nolint:gosec
-	err := g.ioCtl(uintptr(KB_FIND_VARIABLE), unsafe.Pointer(pin))
+	err := g.ioCtl(uintptr(kbFindVariable), unsafe.Pointer(pin))
 	if err != 0 {
 		e := fmt.Errorf("failed to get pin address info %v failed: %w", g.dev, err)
 		return e
@@ -61,7 +62,7 @@ func (g *gpioChip) showDeviceList() error {
 	var deviceInfoList [255]SDeviceInfo
 	g.dioDevices = []SDeviceInfo{}
 	//nolint:gosec
-	cnt, _, err := g.ioCtlReturns(uintptr(KB_GET_DEVICE_INFO_LIST), unsafe.Pointer(&deviceInfoList))
+	cnt, _, err := g.ioCtlReturns(uintptr(kbGetDeviceInfoList), unsafe.Pointer(&deviceInfoList))
 	if err != 0 {
 		e := fmt.Errorf("failed to retrieve device info list: %d", -int(cnt))
 		return e
@@ -72,16 +73,16 @@ func (g *gpioChip) showDeviceList() error {
 		if deviceInfoList[i].i8uActive != 0 {
 			g.logger.Debugf("device %d is of type %s is active", i, getModuleName(deviceInfoList[i].i16uModuleType))
 			if deviceInfoList[i].isDIO() {
-				g.logger.Info("device info: ", deviceInfoList[i])
+				g.logger.Debugf("device info: %v", deviceInfoList[i])
 				g.dioDevices = append(g.dioDevices, deviceInfoList[i])
 			}
 		} else {
-			checkConnected := deviceInfoList[i].i16uModuleType&PICONTROL_NOT_CONNECTED == PICONTROL_NOT_CONNECTED
+			checkConnected := deviceInfoList[i].i16uModuleType&piControlNotConnected == piControlNotConnected
 			if checkConnected {
-				deviceErr := fmt.Errorf("device %d is not connected!", i)
+				deviceErr := fmt.Errorf("device %d is not connected", i)
 				deviceErrs = multierr.Combine(deviceErrs, deviceErr)
 			} else {
-				deviceErr := fmt.Errorf("device %d is type %s but is not configured!", i, getModuleName(deviceInfoList[i].i16uModuleType))
+				deviceErr := fmt.Errorf("device %d is type %s but is not configured", i, getModuleName(deviceInfoList[i].i16uModuleType))
 				deviceErrs = multierr.Combine(deviceErrs, deviceErr)
 			}
 		}
