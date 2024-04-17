@@ -9,7 +9,7 @@ func ioctlAddress(v int) int {
 	return magic
 }
 
-// is the hex output received when a board is not connected.
+// The hex output received when a board is not connected.
 const piControlNotConnected = 0x8000
 
 // leaving these variables in as potential options to interface with the Revolution Pi
