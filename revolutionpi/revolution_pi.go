@@ -121,6 +121,12 @@ func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode,
 }
 
 func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value int32, extra map[string]interface{}) error {
+	reader, err := b.controlChip.GetAnalogInput(pin)
+	if err != nil {
+		b.logger.Error(err)
+		return err
+	}
+	b.logger.Infof("Analog: %#v", reader)
 	return nil
 }
 
