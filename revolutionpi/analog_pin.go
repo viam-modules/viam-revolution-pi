@@ -51,6 +51,29 @@ func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value i
 	if !analogPin.isAnalogOutput() {
 		return fmt.Errorf("cannot WriteAnalog, pin %s is not an analog output pin", pin)
 	}
+
+	// check to see if analog output is enabled
+	bufOutputRange := make([]byte, 1)
+	outputRangeAddress := analogPin.inputOffset + 69
+	// use the corresponding analog OutputRange pin to check if the analog output is enabled
+	if analogPin.Address == analogPin.outputOffset+2 {
+		outputRangeAddress = analogPin.inputOffset + 79
+	}
+	n, err := analogPin.ControlChip.fileHandle.ReadAt(bufOutputRange, int64(outputRangeAddress))
+	if err != nil {
+		return err
+	}
+	if n != 1 {
+		return fmt.Errorf("unable to determine if pin %s is configured for analog write", pin)
+	}
+	b.logger.Debugf("outputRange Value: %d", bufOutputRange)
+	// at a later date we can use this address to help validate the requested value is within the range of the pin.
+	// for now all we need to check is that the voltage range is not configured.
+	// this results in analog output not being enabled.
+	if bufOutputRange[0] == 0 {
+		return fmt.Errorf("pin %s is not configured for analog write", pin)
+	}
+
 	buf := new(bytes.Buffer)
 	err = binary.Write(buf, binary.LittleEndian, value)
 	if err != nil {
@@ -59,12 +82,12 @@ func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value i
 	return analogPin.ControlChip.writeValue(int64(analogPin.Address), buf.Bytes())
 }
 
-// pins at 0 or 2 + outputOffset.
+// Analog output pins are located at address 0 or 2 + outputOffset.
 func (pin *analogPin) isAnalogOutput() bool {
 	return pin.Address == pin.outputOffset || pin.Address == pin.outputOffset+2
 }
 
-// pins at 0-7 + inputOffset.
+// Analog input pins are located at address 0-7 + inputOffset.
 func (pin *analogPin) isAnalogInput() bool {
 	return pin.Address >= pin.inputOffset && pin.Address < pin.inputOffset+8
 }
