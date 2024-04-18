@@ -80,10 +80,11 @@ func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 	return nil
 }
 
-// showDeviceList reads the list of devices from the rev pi and validates the configuration is correct
+// showDeviceList reads the list of devices from the rev pi and validates the configuration is correct.
 func (g *gpioChip) showDeviceList() error {
 	var deviceInfoList [255]SDeviceInfo
 	g.dioDevices = []SDeviceInfo{}
+	g.aioDevices = []SDeviceInfo{}
 	//nolint:gosec
 	cnt, _, err := g.ioCtlReturns(uintptr(kbGetDeviceInfoList), unsafe.Pointer(&deviceInfoList))
 	if err != 0 {
@@ -96,8 +97,12 @@ func (g *gpioChip) showDeviceList() error {
 		if deviceInfoList[i].i8uActive != 0 {
 			g.logger.Debugf("device %d is of type %s is active", i, getModuleName(deviceInfoList[i].i16uModuleType))
 			if deviceInfoList[i].isDIO() {
-				g.logger.Debugf("device info: %v", deviceInfoList[i])
+				g.logger.Debugf("DIO device info: %v", deviceInfoList[i])
 				g.dioDevices = append(g.dioDevices, deviceInfoList[i])
+			}
+			if deviceInfoList[i].isAIO() {
+				g.logger.Debugf("AIO device info: %v", deviceInfoList[i])
+				g.aioDevices = append(g.aioDevices, deviceInfoList[i])
 			}
 		} else {
 			checkConnected := deviceInfoList[i].i16uModuleType&piControlNotConnected == piControlNotConnected

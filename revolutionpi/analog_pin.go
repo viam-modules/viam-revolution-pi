@@ -21,7 +21,7 @@ type analogPin struct {
 
 func (pin *analogPin) Read(ctx context.Context, extra map[string]interface{}) (int, error) {
 	if !pin.isAnalogInput() {
-		return 0, fmt.Errorf("Cannot ReadAnalog, pin %s is not an analog input pin", pin.Name)
+		return 0, fmt.Errorf("cannot ReadAnalog, pin %s is not an analog input pin", pin.Name)
 	}
 	pin.ControlChip.logger.Debugf("Reading from %v, length: %v byte(s)", pin.Address, pin.Length/8)
 	b := make([]byte, pin.Length/8)
@@ -45,15 +45,17 @@ func (pin *analogPin) Close(ctx context.Context) error {
 func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value int32, extra map[string]interface{}) error {
 	analogPin, err := b.controlChip.GetAnalogPin(pin)
 	if err != nil {
-		b.logger.Error(err)
 		return err
 	}
 	b.logger.Infof("Analog: %#v", analogPin)
 	if !analogPin.isAnalogOutput() {
-		return fmt.Errorf("Cannot WriteAnalog, pin %s is not an analog output pin", pin)
+		return fmt.Errorf("cannot WriteAnalog, pin %s is not an analog output pin", pin)
 	}
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, value)
+	err = binary.Write(buf, binary.LittleEndian, value)
+	if err != nil {
+		return err
+	}
 	return analogPin.ControlChip.writeValue(int64(analogPin.Address), buf.Bytes())
 }
 
