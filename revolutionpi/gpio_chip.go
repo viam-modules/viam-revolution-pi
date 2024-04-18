@@ -56,7 +56,7 @@ func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 	}
 	g.logger.Infof("Found Analog pin: %#v", pin)
 	analogPin := analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
-	aio, err := findDevice(analogPin.Address, g.dioDevices)
+	aio, err := findDevice(analogPin.Address, g.aioDevices)
 	if err != nil {
 		analogPin.ControlChip.logger.Debug("pin is not from a supported GPIO board")
 		return nil, err
