@@ -19,6 +19,7 @@ type gpioChip struct {
 	logger     logging.Logger
 	fileHandle *os.File
 	dioDevices []SDeviceInfo
+	aioDevices []SDeviceInfo
 }
 
 func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
@@ -29,12 +30,13 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	}
 	g.logger.Debugf("Found GPIO pin: %#v", pin)
 	gpioPin := gpioPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
-	dio, err := gpioPin.ControlChip.findDIODevice(gpioPin.Address)
+	dio, err := findDevice(gpioPin.Address, g.dioDevices)
 	if err != nil {
-		gpioPin.ControlChip.logger.Debug("pin is not from the DIO")
+		gpioPin.ControlChip.logger.Debug("pin is not from a supported GPIO board")
+		return nil, err
 	}
 
-	// if the requested pin is checking the Output WORD. The WORD takes up to 2 bytes
+	// store the input & output offsets of the board for quick reference
 	gpioPin.outputOffset = dio.i16uOutputOffset
 	gpioPin.inputOffset = dio.i16uInputOffset
 
@@ -45,7 +47,7 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	return &gpioPin, nil
 }
 
-func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
+func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 	g.logger.Debugf("Getting Analog pin: %#s", pinName)
 	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
@@ -53,7 +55,17 @@ func (g *gpioChip) GetAnalogInput(pinName string) (*analogPin, error) {
 		return nil, err
 	}
 	g.logger.Infof("Found Analog pin: %#v", pin)
-	return &analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}, nil
+	analogPin := analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
+	aio, err := findDevice(analogPin.Address, g.dioDevices)
+	if err != nil {
+		analogPin.ControlChip.logger.Debug("pin is not from a supported GPIO board")
+		return nil, err
+	}
+
+	// store the input & output offsets of the board for quick reference
+	analogPin.outputOffset = aio.i16uOutputOffset
+	analogPin.inputOffset = aio.i16uInputOffset
+	return &analogPin, nil
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
@@ -68,6 +80,7 @@ func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
 	return nil
 }
 
+// showDeviceList reads the list of devices from the rev pi and validates the configuration is correct
 func (g *gpioChip) showDeviceList() error {
 	var deviceInfoList [255]SDeviceInfo
 	g.dioDevices = []SDeviceInfo{}
@@ -130,13 +143,11 @@ func (g *gpioChip) getBitValue(address int64, bitPosition uint8) (bool, error) {
 func (g *gpioChip) writeValue(address int64, b []byte) error {
 	g.logger.Debugf("Writing %#d to %v", b, address)
 	n, err := g.fileHandle.WriteAt(b, address)
-	g.logger.Debugf("Wrote %#d byte(s), n: %d", b, n)
 	if err != nil {
 		return err
 	}
-	if n < 1 || n > 1 {
-		return fmt.Errorf("expected 1 byte(s), got %#v", b)
-	}
+	g.logger.Debugf("Wrote %#d byte(s), n: %d", b, n)
+
 	return nil
 }
 
@@ -145,14 +156,14 @@ func (g *gpioChip) Close() error {
 	return err
 }
 
-func (g *gpioChip) findDIODevice(gpioAddress uint16) (SDeviceInfo, error) {
-	for _, dev := range g.dioDevices {
+func findDevice(address uint16, deviceList []SDeviceInfo) (SDeviceInfo, error) {
+	for _, dev := range deviceList {
 		// need to test devOffsetLower with multiple DIO devices
 		devOffsetLower := dev.i16uInputOffset
 		devOffsetUpper := dev.i16uInputOffset + dev.i16uOutputLength + dev.i16uInputLength + dev.i16uConfigLength
-		if gpioAddress >= devOffsetLower && gpioAddress < devOffsetUpper {
+		if address >= devOffsetLower && address < devOffsetUpper {
 			return dev, nil
 		}
 	}
-	return SDeviceInfo{}, fmt.Errorf("unable to find device for pin %d", gpioAddress)
+	return SDeviceInfo{}, fmt.Errorf("unable to find device for pin %d", address)
 }

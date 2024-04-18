@@ -82,14 +82,15 @@ func newBoard(
 func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []string, ch chan board.Tick, extra map[string]interface{}) error {
 	return nil
 }
+
 func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
-	reader, err := b.controlChip.GetAnalogInput(name)
+	pin, err := b.controlChip.GetAnalogPin(name)
 	if err != nil {
 		b.logger.Error(err)
 		return nil, false
 	}
-	b.logger.Infof("Analog Reader: %#v", reader)
-	return reader, true
+	b.logger.Infof("Analog Pin: %#v", pin)
+	return pin, true
 }
 
 func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
@@ -118,16 +119,6 @@ func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interfa
 
 func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
 	return grpc.UnimplementedError
-}
-
-func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value int32, extra map[string]interface{}) error {
-	reader, err := b.controlChip.GetAnalogInput(pin)
-	if err != nil {
-		b.logger.Error(err)
-		return err
-	}
-	b.logger.Infof("Analog: %#v", reader)
-	return nil
 }
 
 func (b *revolutionPiBoard) Close(ctx context.Context) error {
