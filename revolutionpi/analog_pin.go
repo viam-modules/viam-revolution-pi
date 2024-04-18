@@ -68,7 +68,7 @@ func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value i
 	}
 	b.logger.Debugf("outputRange Value: %d", bufOutputRange)
 	// at a later date we can use this address to help validate the requested value is within the range of the pin.
-	// for now all we need to check is that the voltage range is not configured.
+	// for now all we need to check is if the voltage range is not configured.
 	// this results in analog output not being enabled.
 	if bufOutputRange[0] == 0 {
 		return fmt.Errorf("pin %s is not configured for analog write", pin)
