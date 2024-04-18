@@ -89,7 +89,7 @@ func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader,
 		b.logger.Error(err)
 		return nil, false
 	}
-	b.logger.Infof("Analog Pin: %#v", pin)
+	b.logger.Debugf("Analog Pin: %#v", pin)
 	return pin, true
 }
 

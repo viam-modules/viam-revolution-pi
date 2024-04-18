@@ -47,7 +47,7 @@ func (b *revolutionPiBoard) WriteAnalog(ctx context.Context, pin string, value i
 	if err != nil {
 		return err
 	}
-	b.logger.Infof("Analog: %#v", analogPin)
+	b.logger.Debugf("Analog: %#v", analogPin)
 	if !analogPin.isAnalogOutput() {
 		return fmt.Errorf("cannot WriteAnalog, pin %s is not an analog output pin", pin)
 	}
