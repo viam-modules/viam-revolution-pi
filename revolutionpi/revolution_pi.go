@@ -80,7 +80,7 @@ func newBoard(
 
 // StreamTicks starts a stream of digital interrupt ticks.
 func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []string, ch chan board.Tick, extra map[string]interface{}) error {
-	return nil
+	return grpc.UnimplementedError
 }
 
 func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
