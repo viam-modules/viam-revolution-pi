@@ -34,23 +34,14 @@ type gpioPin struct {
 }
 
 func (pin *gpioPin) initialize() error {
-	dio, err := pin.ControlChip.findDIODevice(pin.Address)
-	if err != nil {
-		pin.ControlChip.logger.Debug("pin is not from the DIO")
-		return err
-	}
-
-	// if the requested pin is checking the Output WORD. The WORD takes up to 2 bytes
-	pin.outputOffset = dio.i16uOutputOffset
-	pin.inputOffset = dio.i16uInputOffset
-
+	var err error
 	val := false
 
 	// for output gpio pins pwm can be enabled, so we should check for that
 	if pin.isDigitalOutput() {
 		// if the normal gpio output is given, use the bit position to check if we are in pwm mode.
 		// We also need to determine which address to check.
-		pwmActiveAddress := int64(pin.Address - dio.i16uOutputOffset + dio.i16uInputOffset + outputPWMActiveOffset)
+		pwmActiveAddress := int64(pin.Address - pin.outputOffset + pin.inputOffset + outputPWMActiveOffset)
 		val, err = pin.ControlChip.getBitValue(pwmActiveAddress, pin.BitPosition)
 		if err != nil {
 			return err
@@ -58,9 +49,9 @@ func (pin *gpioPin) initialize() error {
 	} else if pin.isOutputPWM() {
 		// we want to read a bit from OutputPWMActive WORD to see if pwm is enabled,
 		// so we convert the pin address into the matching bits, where PWM_1 corresponds to bit 0.
-		// Output pins start at dio.i16uOutputOffset+2, so we can subtract pin address by that amount to get the correct bit
-		pwmActiveBitPosition := uint8(pin.Address - dio.i16uOutputOffset - outputWordToPWMOffset) // between 0 and 16
-		pwmActiveAddress := int64(dio.i16uInputOffset + outputPWMActiveOffset + uint16(pwmActiveBitPosition>>3))
+		// Output pins start at pin.outputOffset+2, so we can subtract pin address by that amount to get the correct bit
+		pwmActiveBitPosition := uint8(pin.Address - pin.outputOffset - outputWordToPWMOffset) // between 0 and 16
+		pwmActiveAddress := int64(pin.inputOffset + outputPWMActiveOffset + uint16(pwmActiveBitPosition>>3))
 		val, err = pin.ControlChip.getBitValue(pwmActiveAddress, pwmActiveBitPosition%8)
 		if err != nil {
 			return err

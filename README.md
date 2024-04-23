@@ -24,4 +24,4 @@ This will enable pins O_3 and O_9 as PWM pins, which can be used with Viam's API
 
 ### ADC and DAC
 
-ADC and DAC are currently not supported in this module. See the [AIO Module](https://revolutionpi.com/en/tutorials/overview-aio) For more information on the Revolution Pi's capabilities.
+The [AIO Module](https://revolutionpi.com/en/tutorials/overview-aio) is used for analog inputs and outputs on the Revolution Pi. The module currently supports 4 analog readers and 2 analog writers. the RTD analog readers are currently not managed by this module. See [RTD Measurement Documentation](https://revolutionpi.com/en/tutorials/overview-aio/rtd-measurement) for the Revolution Pi for more information.

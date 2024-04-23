@@ -87,6 +87,11 @@ func (dev *SDeviceInfo) isDIO() bool {
 	return dev.i16uModuleType == 96 || dev.i16uModuleType == 97 || dev.i16uModuleType == 98
 }
 
+// isAIO checks whether the module is an AIO module, which can be used with our Analog related apis.
+func (dev *SDeviceInfo) isAIO() bool {
+	return dev.i16uModuleType == 103
+}
+
 // getModuleName gets the module name based on the module type.
 func getModuleName(moduleType uint16) string {
 	switch {
