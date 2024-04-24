@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	commonpb "go.viam.com/api/common/v1"
+	"go.uber.org/multierr"
 	pb "go.viam.com/api/component/board/v1"
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/grpc"
@@ -33,6 +33,7 @@ type revolutionPiBoard struct {
 	cancelCtx               context.Context
 	cancelFunc              func()
 	activeBackgroundWorkers sync.WaitGroup
+	interrupts              map[string]*digitalInterrupt
 }
 
 func init() {
@@ -68,6 +69,7 @@ func newBoard(
 		GPIONames:     []string{},
 		controlChip:   &gpioChip,
 		mu:            sync.RWMutex{},
+		interrupts:    map[string]*digitalInterrupt{},
 	}
 
 	err = b.controlChip.showDeviceList()
@@ -79,25 +81,38 @@ func newBoard(
 }
 
 // StreamTicks starts a stream of digital interrupt ticks.
-func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []string, ch chan board.Tick, extra map[string]interface{}) error {
-	return grpc.UnimplementedError
+func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []board.DigitalInterrupt, ch chan board.Tick, extra map[string]interface{}) error {
+	for _, i := range interrupts {
+		i.AddCallback(ch)
+	}
+	return nil
+	// return grpc.UnimplementedError
 }
 
-func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
+func (b *revolutionPiBoard) AnalogByName(name string) (board.Analog, error) {
 	pin, err := b.controlChip.GetAnalogPin(name)
+	if err != nil {
+		b.logger.Error(err)
+		return nil, err
+	}
+	b.logger.Debugf("Analog Pin: %#v", pin)
+	return pin, nil
+}
+
+func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
+	b.logger.Info("yo interrupt: ", name)
+	interrupt, err := b.controlChip.GetDigitalInterrupt(b.cancelCtx, name)
 	if err != nil {
 		b.logger.Error(err)
 		return nil, false
 	}
-	b.logger.Debugf("Analog Pin: %#v", pin)
-	return pin, true
+	interrupt.boardWorkers = &b.activeBackgroundWorkers
+	interrupt.startMonitor()
+	b.interrupts[name] = interrupt
+	return interrupt.interrupt, true // Digital interrupts aren't supported.
 }
 
-func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
-	return nil, false // Digital interrupts aren't supported.
-}
-
-func (b *revolutionPiBoard) AnalogReaderNames() []string {
+func (b *revolutionPiBoard) AnalogNames() []string {
 	return nil
 }
 
@@ -110,11 +125,8 @@ func (b *revolutionPiBoard) GPIOPinNames() []string {
 }
 
 func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error) {
+	b.logger.Info("yo pin: ", pinName)
 	return b.controlChip.GetGPIOPin(pinName)
-}
-
-func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
-	return &commonpb.BoardStatus{}, nil
 }
 
 func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
@@ -127,6 +139,12 @@ func (b *revolutionPiBoard) Close(ctx context.Context) error {
 	defer b.mu.Unlock()
 	b.cancelFunc()
 	err := b.controlChip.Close()
+	if err != nil {
+		return err
+	}
+	for _, interrupt := range b.interrupts {
+		err = multierr.Combine(err, interrupt.Close())
+	}
 	if err != nil {
 		return err
 	}

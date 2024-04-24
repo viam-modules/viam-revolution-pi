@@ -12,8 +12,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rhysd/actionlint v1.6.24
 	go.uber.org/multierr v1.11.0
-	go.viam.com/api v0.1.285
-	go.viam.com/rdk v0.25.0-rc1.0.20240422140837-0f430d44bc6f
+	go.viam.com/api v0.1.289
+	go.viam.com/rdk v0.25.0-rc1.0.20240423185049-5f9b8ea0bd0f
 	go.viam.com/utils v0.1.71
 	golang.org/x/sys v0.18.0
 	gotest.tools/gotestsum v1.10.0

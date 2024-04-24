@@ -4,6 +4,7 @@
 package revolutionpi
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"syscall"
@@ -66,6 +67,28 @@ func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 	analogPin.outputOffset = aio.i16uOutputOffset
 	analogPin.inputOffset = aio.i16uInputOffset
 	return &analogPin, nil
+}
+
+func (g *gpioChip) GetDigitalInterrupt(ctx context.Context, pinName string) (*digitalInterrupt, error) {
+	g.logger.Infof("Getting digital interrupt pin: %#s", pinName)
+	pin := SPIVariable{strVarName: char32(pinName)}
+	err := g.mapNameToAddress(&pin)
+	if err != nil {
+		return nil, err
+	}
+	cancelCtx, cancelFunc := context.WithCancel(ctx)
+	diPin := digitalInterrupt{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g, cancelCtx: cancelCtx, cancelFunc: cancelFunc}
+	g.logger.Infof("setting up digital interrupt pin: %v", diPin)
+	dio, err := findDevice(diPin.Address, g.dioDevices)
+	// store the input & output offsets of the board for quick reference
+	diPin.outputOffset = dio.i16uOutputOffset
+	diPin.inputOffset = dio.i16uInputOffset
+	g.logger.Infof("initializing pin", diPin)
+	err = diPin.initialize()
+	if err != nil {
+		return nil, err
+	}
+	return &diPin, nil
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {

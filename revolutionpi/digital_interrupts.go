@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"go.viam.com/utils"
 
+	"go.uber.org/multierr"
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/components/board/pinwrappers"
 )
@@ -23,6 +24,13 @@ type digitalInterrupt struct {
 	cancelCtx    context.Context
 	cancelFunc   func()
 	config       *board.DigitalInterruptConfig
+
+	Name         string // Variable name
+	Address      uint16 // Address of the byte in the process image
+	Length       uint16 // length of the variable in bits. Possible values are 1, 8, 16 and 32
+	ControlChip  *gpioChip
+	outputOffset uint16
+	inputOffset  uint16
 }
 
 // func (b *Board) createDigitalInterrupt(
@@ -64,18 +72,52 @@ type digitalInterrupt struct {
 // 		}
 // 	}
 
-// 	cancelCtx, cancelFunc := context.WithCancel(ctx)
-// 	result := digitalInterrupt{
-// 		boardWorkers: &b.activeBackgroundWorkers,
-// 		interrupt:    interrupt,
-// 		line:         line,
-// 		cancelCtx:    cancelCtx,
-// 		cancelFunc:   cancelFunc,
-// 		config:       &config,
-// 	}
-// 	result.startMonitor()
-// 	return &result, nil
-// }
+//		cancelCtx, cancelFunc := context.WithCancel(ctx)
+//		result := digitalInterrupt{
+//			boardWorkers: &b.activeBackgroundWorkers,
+//			interrupt:    interrupt,
+//			line:         line,
+//			cancelCtx:    cancelCtx,
+//			cancelFunc:   cancelFunc,
+//			config:       &config,
+//		}
+//		result.startMonitor()
+//		return &result, nil
+//	}
+func (di *digitalInterrupt) initialize() error {
+	di.ControlChip.logger.Info("yo dev path: ", di.ControlChip.dev)
+	chip, err := gpio.OpenChip("piControl0")
+	if err != nil {
+		return err
+	}
+	defer utils.UncheckedErrorFunc(chip.Close)
+
+	di.ControlChip.logger.Info("yo chip: ", chip)
+	line, err := chip.OpenLineWithEvents(
+		uint32(di.Address), gpio.Input, gpio.BothEdges, "viam-interrupt")
+	if err != nil {
+		return err
+	}
+
+	cfg := board.DigitalInterruptConfig{Name: di.Name, Pin: di.Name}
+	interrupt, err := pinwrappers.CreateDigitalInterrupt(cfg)
+	if err != nil {
+		return multierr.Combine(err, line.Close())
+	}
+	di.line = line
+	di.interrupt = interrupt
+	di.config = &cfg
+
+	// result := digitalInterrupt{
+	// 	boardWorkers: &b.activeBackgroundWorkers,
+	// 	interrupt:    interrupt,
+	// 	line:         line,
+	// 	cancelCtx:    cancelCtx,
+	// 	cancelFunc:   cancelFunc,
+	// 	config:       &config,
+	// }
+	return nil
+}
 
 func (di *digitalInterrupt) startMonitor() {
 	di.boardWorkers.Add(1)
