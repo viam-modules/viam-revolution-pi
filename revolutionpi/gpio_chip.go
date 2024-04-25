@@ -76,8 +76,7 @@ func (g *gpioChip) GetDigitalInterrupt(ctx context.Context, pinName string) (*di
 	if err != nil {
 		return nil, err
 	}
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	diPin := digitalInterrupt{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g, cancelCtx: cancelCtx, cancelFunc: cancelFunc}
+	diPin := digitalInterrupt{PinName: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
 	g.logger.Infof("setting up digital interrupt pin: %v", diPin)
 	dio, err := findDevice(diPin.Address, g.dioDevices)
 	// store the input & output offsets of the board for quick reference

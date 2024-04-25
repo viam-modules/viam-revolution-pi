@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/multierr"
 	pb "go.viam.com/api/component/board/v1"
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/grpc"
@@ -82,11 +81,7 @@ func newBoard(
 
 // StreamTicks starts a stream of digital interrupt ticks.
 func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []board.DigitalInterrupt, ch chan board.Tick, extra map[string]interface{}) error {
-	for _, i := range interrupts {
-		i.AddCallback(ch)
-	}
-	return nil
-	// return grpc.UnimplementedError
+	return grpc.UnimplementedError
 }
 
 func (b *revolutionPiBoard) AnalogByName(name string) (board.Analog, error) {
@@ -106,10 +101,8 @@ func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalIn
 		b.logger.Error(err)
 		return nil, false
 	}
-	interrupt.boardWorkers = &b.activeBackgroundWorkers
-	interrupt.startMonitor()
-	b.interrupts[name] = interrupt
-	return interrupt.interrupt, true // Digital interrupts aren't supported.
+
+	return interrupt, true // Digital interrupts aren't supported.
 }
 
 func (b *revolutionPiBoard) AnalogNames() []string {
@@ -139,12 +132,6 @@ func (b *revolutionPiBoard) Close(ctx context.Context) error {
 	defer b.mu.Unlock()
 	b.cancelFunc()
 	err := b.controlChip.Close()
-	if err != nil {
-		return err
-	}
-	for _, interrupt := range b.interrupts {
-		err = multierr.Combine(err, interrupt.Close())
-	}
 	if err != nil {
 		return err
 	}
