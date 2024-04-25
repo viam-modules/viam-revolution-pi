@@ -32,7 +32,6 @@ type revolutionPiBoard struct {
 	cancelCtx               context.Context
 	cancelFunc              func()
 	activeBackgroundWorkers sync.WaitGroup
-	interrupts              map[string]*digitalInterrupt
 }
 
 func init() {
@@ -68,7 +67,6 @@ func newBoard(
 		GPIONames:     []string{},
 		controlChip:   &gpioChip,
 		mu:            sync.RWMutex{},
-		interrupts:    map[string]*digitalInterrupt{},
 	}
 
 	err = b.controlChip.showDeviceList()
@@ -79,7 +77,7 @@ func newBoard(
 	return &b, nil
 }
 
-// StreamTicks starts a stream of digital interrupt ticks.
+// StreamTicks starts a stream of digital interrupt ticks. The rev pi does not support this feature
 func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []board.DigitalInterrupt, ch chan board.Tick, extra map[string]interface{}) error {
 	return grpc.UnimplementedError
 }
@@ -94,6 +92,7 @@ func (b *revolutionPiBoard) AnalogByName(name string) (board.Analog, error) {
 	return pin, nil
 }
 
+// DigitalInterruptByName returns a digital interrupt. The rev pi only supports the Value API
 func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
 	b.logger.Info("yo interrupt: ", name)
 	interrupt, err := b.controlChip.GetDigitalInterrupt(b.cancelCtx, name)
@@ -102,7 +101,7 @@ func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalIn
 		return nil, false
 	}
 
-	return interrupt, true // Digital interrupts aren't supported.
+	return interrupt, true
 }
 
 func (b *revolutionPiBoard) AnalogNames() []string {

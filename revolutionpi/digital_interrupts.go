@@ -6,9 +6,14 @@ package revolutionpi
 
 import (
 	"context"
+	"errors"
 
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/grpc"
+)
+
+const (
+	inputModeOffset = 88
 )
 
 type digitalInterrupt struct {
@@ -21,6 +26,30 @@ type digitalInterrupt struct {
 }
 
 func (di *digitalInterrupt) initialize() error {
+	var addressInputMode uint16
+	if di.isInputCounter() {
+		// read from the input mode byte to determine if the pin is configured for counter/interrupt mode
+
+		// determine which address to check for the input mode
+		addressInputMode = (di.Address - di.inputOffset - inputWordToCounterOffset) >> 2
+
+	} else {
+		return errors.New("pin is not a digital input pin")
+	}
+	b := make([]byte, 1)
+	// all PWM pins use the same PWM frequency
+	n, err := di.ControlChip.fileHandle.ReadAt(b, int64(di.inputOffset+inputModeOffset+addressInputMode))
+	if err != nil {
+		return err
+	}
+	if n != 1 {
+		return errors.New("unable to read digital input pin configuration")
+	}
+	di.ControlChip.logger.Infof("Current Pin configuration: %#d", b)
+	// check if the pin is configured as a counter
+	if b[0] == 0 || b[0] == 4 {
+		return errors.New("pin is not configured as a counter")
+	}
 
 	return nil
 }
@@ -42,4 +71,14 @@ func (di *digitalInterrupt) RemoveCallback(c chan board.Tick) {}
 
 func (di *digitalInterrupt) Close(ctx context.Context) error {
 	return nil
+}
+
+// addresses at 6 to 70 + inputOffset.
+func (di *digitalInterrupt) isInputCounter() bool {
+	return di.Address >= di.inputOffset+inputWordToCounterOffset && di.Address < di.outputOffset
+}
+
+// addresses at 0 and 1 + inputOffset.
+func (di *digitalInterrupt) isDigitalInput() bool {
+	return di.Address == di.inputOffset || di.Address == di.inputOffset+1
 }
