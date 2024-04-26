@@ -79,7 +79,8 @@ func newBoard(
 
 // StreamTicks starts a stream of digital interrupt ticks. The rev pi does not support this feature.
 func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []board.DigitalInterrupt,
-	ch chan board.Tick, extra map[string]interface{}) error {
+	ch chan board.Tick, extra map[string]interface{},
+) error {
 	return grpc.UnimplementedError
 }
 
@@ -94,15 +95,15 @@ func (b *revolutionPiBoard) AnalogByName(name string) (board.Analog, error) {
 }
 
 // DigitalInterruptByName returns a digital interrupt. The rev pi only supports the Value API.
-func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
-	interrupt, err := b.controlChip.GetDigitalInterrupt(b.cancelCtx, name)
+func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, error) {
+	interrupt, err := b.controlChip.GetDigitalInterrupt(name)
 	if err != nil {
 		b.logger.Error(err)
-		return nil, false
+		return nil, err
 	}
 	b.logger.Debugf("Interrupt Pin: %#v", interrupt)
 
-	return interrupt, true
+	return interrupt, nil
 }
 
 func (b *revolutionPiBoard) AnalogNames() []string {

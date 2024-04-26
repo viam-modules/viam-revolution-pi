@@ -4,7 +4,6 @@
 package revolutionpi
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"syscall"
@@ -68,7 +67,7 @@ func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 	return &analogPin, nil
 }
 
-func (g *gpioChip) GetDigitalInterrupt(ctx context.Context, pinName string) (*digitalInterrupt, error) {
+func (g *gpioChip) GetDigitalInterrupt(pinName string) (*digitalInterrupt, error) {
 	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {

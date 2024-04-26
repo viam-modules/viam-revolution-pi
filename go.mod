@@ -11,7 +11,7 @@ require (
 	github.com/rhysd/actionlint v1.6.24
 	go.uber.org/multierr v1.11.0
 	go.viam.com/api v0.1.289
-	go.viam.com/rdk v0.25.0-rc1.0.20240423185049-5f9b8ea0bd0f
+	go.viam.com/rdk v0.26.0-rc0.0.20240426210745-a81e17bcc2ec
 	go.viam.com/utils v0.1.71
 	golang.org/x/sys v0.18.0
 	gotest.tools/gotestsum v1.10.0
@@ -272,7 +272,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/zitadel/oidc v1.13.5 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
-	gitlab.com/bosi/decorder v0.4.0 // indirect
+	gitlab.com/bosi/decorder v0.4.1 // indirect
 	go-hep.org/x/hep v0.34.1 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opencensus.io v0.24.0 // indirect

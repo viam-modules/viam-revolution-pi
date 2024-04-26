@@ -1,7 +1,6 @@
 //go:build linux
 
-// Package genericlinux is for Linux boards, and this particular file is for digital interrupt pins
-// using the ioctl interface, indirectly by way of mkch's gpio package.
+// Package revolutionpi implements the Revolution Pi board GPIO pins.
 package revolutionpi
 
 import (
@@ -11,7 +10,6 @@ import (
 	"fmt"
 
 	"go.viam.com/rdk/components/board"
-	"go.viam.com/rdk/grpc"
 )
 
 const (
@@ -35,23 +33,21 @@ func (di *digitalInterrupt) initialize() error {
 
 	// read from the input mode byte to determine if the pin is configured for counter/interrupt mode
 	// determine which address to check for the input mode based on which pin was given in the request
-	if di.isInputCounter() {
+	switch {
+	case di.isInputCounter():
 		addressInputMode = (di.Address - di.inputOffset - inputWordToCounterOffset) >> 2
 
 		// record the address for the interrupt
 		di.interruptAddress = di.Address
-	} else if di.isDigitalInput() {
+	case di.isDigitalInput():
 		// depending on whether the request came from the first or second set of digital input pins, add 0 or 8
 		firstOrSecondHalf := (di.Address - di.inputOffset) << 3
 		addressInputMode = firstOrSecondHalf + uint16(di.BitPosition)
 		di.interruptAddress = di.inputOffset + inputWordToCounterOffset + addressInputMode*4
-		di.ControlChip.logger.Info("half: ", firstOrSecondHalf)
-		di.ControlChip.logger.Info("bit : ", di.BitPosition)
-		di.ControlChip.logger.Info("pin number: ", addressInputMode)
-		di.ControlChip.logger.Info("address counter: ", di.interruptAddress)
-	} else {
+	default:
 		return errors.New("pin is not a digital input pin")
 	}
+
 	b := make([]byte, 1)
 	// read from the input mode addresses to see if the pin is configured for interrupts
 	n, err := di.ControlChip.fileHandle.ReadAt(b, int64(di.inputOffset+inputModeOffset+addressInputMode))
@@ -93,12 +89,6 @@ func (di *digitalInterrupt) Value(ctx context.Context, extra map[string]interfac
 func (di *digitalInterrupt) Name() string {
 	return di.PinName
 }
-
-func (di *digitalInterrupt) Tick(ctx context.Context, high bool, nanoseconds uint64) error {
-	return grpc.UnimplementedError
-}
-
-func (di *digitalInterrupt) AddCallback(c chan board.Tick) {}
 
 func (di *digitalInterrupt) RemoveCallback(c chan board.Tick) {}
 
