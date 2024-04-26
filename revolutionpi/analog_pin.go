@@ -111,7 +111,7 @@ func (pin *analogPin) Write(ctx context.Context, value int, extra map[string]int
 	}
 
 	buf := new(bytes.Buffer)
-	err = binary.Write(buf, binary.LittleEndian, value)
+	err = binary.Write(buf, binary.LittleEndian, int32(value))
 	if err != nil {
 		return err
 	}

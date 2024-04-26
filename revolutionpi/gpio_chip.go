@@ -49,13 +49,12 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 }
 
 func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
-	g.logger.Debugf("Getting Analog pin: %#s", pinName)
 	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
-	g.logger.Infof("Found Analog pin: %#v", pin)
+	g.logger.Debugf("Found Analog pin: %#v", pin)
 	analogPin := analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
 	aio, err := findDevice(analogPin.Address, g.aioDevices)
 	if err != nil {
@@ -70,19 +69,23 @@ func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 }
 
 func (g *gpioChip) GetDigitalInterrupt(ctx context.Context, pinName string) (*digitalInterrupt, error) {
-	g.logger.Infof("Getting digital interrupt pin: %#s", pinName)
 	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
-	diPin := digitalInterrupt{PinName: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
-	g.logger.Infof("setting up digital interrupt pin: %v", diPin)
+	diPin := digitalInterrupt{
+		PinName: str32(pin.strVarName), Address: pin.i16uAddress,
+		Length: pin.i16uLength, BitPosition: pin.i8uBit, ControlChip: g,
+	}
+	g.logger.Debugf("setting up digital interrupt pin: %v", diPin)
 	dio, err := findDevice(diPin.Address, g.dioDevices)
+	if err != nil {
+		return nil, err
+	}
 	// store the input & output offsets of the board for quick reference
 	diPin.outputOffset = dio.i16uOutputOffset
 	diPin.inputOffset = dio.i16uInputOffset
-	g.logger.Infof("initializing pin", diPin)
 	err = diPin.initialize()
 	if err != nil {
 		return nil, err

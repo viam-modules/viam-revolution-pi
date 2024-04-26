@@ -8,8 +8,6 @@ require (
 	github.com/edaniels/golinters v0.0.5-0.20220906153528-641155550742
 	github.com/fullstorydev/grpcurl v1.8.9
 	github.com/golangci/golangci-lint v1.54.0
-	github.com/mkch/gpio v0.0.0-20190919032813-8327cd97d95e
-	github.com/pkg/errors v0.9.1
 	github.com/rhysd/actionlint v1.6.24
 	go.uber.org/multierr v1.11.0
 	go.viam.com/api v0.1.289
@@ -213,6 +211,7 @@ require (
 	github.com/pion/transport/v2 v2.2.4 // indirect
 	github.com/pion/turn/v2 v2.1.5 // indirect
 	github.com/pion/webrtc/v3 v3.2.36 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polyfloyd/go-errorlint v1.4.3 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
