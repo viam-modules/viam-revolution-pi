@@ -17,68 +17,85 @@ const (
 )
 
 type digitalInterrupt struct {
-	PinName          string // Variable name
-	Address          uint16 // Address of the byte in the process image
-	Length           uint16 // length of the variable in bits. Possible values are 1, 8, 16 and 32
-	BitPosition      uint8  // 0-7 bit position, >= 8 whole byte, only used if the digital input pin is given
-	ControlChip      *gpioChip
+	pinName          string // Variable name
+	address          uint16 // address of the byte in the process image
+	length           uint16 // length of the variable in bits. Possible values are 1, 8, 16 and 32
+	bitPosition      uint8  // 0-7 bit position, >= 8 whole byte, only used if the digital input pin is given
+	controlChip      *gpioChip
 	outputOffset     uint16
 	inputOffset      uint16
 	enabled          bool
 	interruptAddress uint16
 }
 
-func (di *digitalInterrupt) initialize() error {
+func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip) (*digitalInterrupt, error) {
+
+	di := digitalInterrupt{
+		pinName: str32(pin.strVarName), address: pin.i16uAddress,
+		length: pin.i16uLength, bitPosition: pin.i8uBit, controlChip: g,
+	}
+	g.logger.Debugf("setting up digital interrupt pin: %v", di)
+	dio, err := findDevice(di.address, g.dioDevices)
+	if err != nil {
+		return &digitalInterrupt{}, err
+	}
+	// store the input & output offsets of the board for quick reference
+	di.outputOffset = dio.i16uOutputOffset
+	di.inputOffset = dio.i16uInputOffset
+
 	var addressInputMode uint16
 
 	// read from the input mode byte to determine if the pin is configured for counter/interrupt mode
 	// determine which address to check for the input mode based on which pin was given in the request
 	switch {
 	case di.isInputCounter():
-		addressInputMode = (di.Address - di.inputOffset - inputWordToCounterOffset) >> 2
+		addressInputMode = (di.address - di.inputOffset - inputWordToCounterOffset) >> 2
 
 		// record the address for the interrupt
-		di.interruptAddress = di.Address
+		di.interruptAddress = di.address
 	case di.isDigitalInput():
-		// depending on whether the request came from the first or second set of digital input pins, add 0 or 8
-		firstOrSecondHalf := (di.Address - di.inputOffset) << 3
-		addressInputMode = firstOrSecondHalf + uint16(di.BitPosition)
+		addressInputMode = uint16(di.bitPosition)
+		if di.address > di.inputOffset { // This is the second set of input pins, so move the offset over
+			addressInputMode += 8
+		}
 		di.interruptAddress = di.inputOffset + inputWordToCounterOffset + addressInputMode*4
 	default:
-		return errors.New("pin is not a digital input pin")
+		return &digitalInterrupt{}, errors.New("pin is not a digital input pin")
 	}
 
 	b := make([]byte, 1)
 	// read from the input mode addresses to see if the pin is configured for interrupts
-	n, err := di.ControlChip.fileHandle.ReadAt(b, int64(di.inputOffset+inputModeOffset+addressInputMode))
+	n, err := di.controlChip.fileHandle.ReadAt(b, int64(di.inputOffset+inputModeOffset+addressInputMode))
 	if err != nil {
-		return err
+		return &digitalInterrupt{}, err
 	}
 	if n != 1 {
-		return errors.New("unable to read digital input pin configuration")
+		return &digitalInterrupt{}, errors.New("unable to read digital input pin configuration")
 	}
-	di.ControlChip.logger.Debugf("Current Pin configuration: %#d", b)
+	di.controlChip.logger.Debugf("Current Pin configuration: %#d", b)
 
 	// check if the pin is configured as a counter
+	// b[0] == 0 means the interrupt is disabled, b[0] == 3 means the pin is configured for encoder mode
 	if b[0] == 0 || b[0] == 3 {
-		return errors.New("pin is not configured as a counter")
+		return &digitalInterrupt{}, errors.New("pin is not configured as a counter")
 	}
 	di.enabled = true
 
-	return nil
+	return &di, nil
 }
 
+// Note: The revolution pi only supports uint32 counters, while the Value API expects int64
 func (di *digitalInterrupt) Value(ctx context.Context, extra map[string]interface{}) (int64, error) {
 	if !di.enabled {
-		return 0, fmt.Errorf("cannot get digital interrupt value, pin %s is not configured as an interrupt", di.PinName)
+		return 0, fmt.Errorf("cannot get digital interrupt value, pin %s is not configured as an interrupt", di.pinName)
 	}
-	di.ControlChip.logger.Debugf("Reading from %d, length: 4 byte(s)", di.interruptAddress)
+	di.controlChip.logger.Debugf("Reading from %d, length: 4 byte(s)", di.interruptAddress)
 	b := make([]byte, 4)
-	n, err := di.ControlChip.fileHandle.ReadAt(b, int64(di.interruptAddress))
+	n, err := di.controlChip.fileHandle.ReadAt(b, int64(di.interruptAddress))
 	if err != nil {
 		return 0, err
 	}
-	di.ControlChip.logger.Debugf("Read %#v bytes", b)
+	di.controlChip.logger.Debugf("Read %#v bytes", b)
 	if n != 4 {
 		return 0, fmt.Errorf("expected 4 bytes, got %#v", b)
 	}
@@ -87,7 +104,7 @@ func (di *digitalInterrupt) Value(ctx context.Context, extra map[string]interfac
 }
 
 func (di *digitalInterrupt) Name() string {
-	return di.PinName
+	return di.pinName
 }
 
 func (di *digitalInterrupt) RemoveCallback(c chan board.Tick) {}
@@ -98,10 +115,10 @@ func (di *digitalInterrupt) Close(ctx context.Context) error {
 
 // addresses at 6 to 70 + inputOffset.
 func (di *digitalInterrupt) isInputCounter() bool {
-	return di.Address >= di.inputOffset+inputWordToCounterOffset && di.Address < di.outputOffset
+	return di.address >= di.inputOffset+inputWordToCounterOffset && di.address < di.outputOffset
 }
 
 // addresses at 0 and 1 + inputOffset.
 func (di *digitalInterrupt) isDigitalInput() bool {
-	return di.Address == di.inputOffset || di.Address == di.inputOffset+1
+	return di.address == di.inputOffset || di.address == di.inputOffset+1
 }

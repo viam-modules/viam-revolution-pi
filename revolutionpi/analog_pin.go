@@ -89,12 +89,12 @@ func (pin *analogPin) Write(ctx context.Context, value int, extra map[string]int
 	}
 
 	// check to see if analog output is enabled
-	bufOutputRange := make([]byte, 1)
 	outputRangeAddress := pin.inputOffset + 69
 	// use the corresponding analog OutputRange pin to check if the analog output is enabled
 	if pin.Address == pin.outputOffset+2 {
 		outputRangeAddress = pin.inputOffset + 79
 	}
+	bufOutputRange := make([]byte, 1)
 	n, err := pin.ControlChip.fileHandle.ReadAt(bufOutputRange, int64(outputRangeAddress))
 	if err != nil {
 		return err
