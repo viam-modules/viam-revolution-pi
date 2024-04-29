@@ -73,23 +73,8 @@ func (g *gpioChip) GetDigitalInterrupt(pinName string) (*digitalInterrupt, error
 	if err != nil {
 		return nil, err
 	}
-	diPin := digitalInterrupt{
-		PinName: str32(pin.strVarName), Address: pin.i16uAddress,
-		Length: pin.i16uLength, BitPosition: pin.i8uBit, ControlChip: g,
-	}
-	g.logger.Debugf("setting up digital interrupt pin: %v", diPin)
-	dio, err := findDevice(diPin.Address, g.dioDevices)
-	if err != nil {
-		return nil, err
-	}
-	// store the input & output offsets of the board for quick reference
-	diPin.outputOffset = dio.i16uOutputOffset
-	diPin.inputOffset = dio.i16uInputOffset
-	err = diPin.initialize()
-	if err != nil {
-		return nil, err
-	}
-	return &diPin, nil
+
+	return initializeDigitalInterrupt(pin, g)
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {

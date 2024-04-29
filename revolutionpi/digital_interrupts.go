@@ -29,7 +29,6 @@ type digitalInterrupt struct {
 }
 
 func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip) (*digitalInterrupt, error) {
-
 	di := digitalInterrupt{
 		pinName: str32(pin.strVarName), address: pin.i16uAddress,
 		length: pin.i16uLength, bitPosition: pin.i8uBit, controlChip: g,
@@ -84,7 +83,7 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip) (*digitalInterrupt
 	return &di, nil
 }
 
-// Note: The revolution pi only supports uint32 counters, while the Value API expects int64
+// Note: The revolution pi only supports uint32 counters, while the Value API expects int64.
 func (di *digitalInterrupt) Value(ctx context.Context, extra map[string]interface{}) (int64, error) {
 	if !di.enabled {
 		return 0, fmt.Errorf("cannot get digital interrupt value, pin %s is not configured as an interrupt", di.pinName)
