@@ -11,7 +11,7 @@ require (
 	github.com/rhysd/actionlint v1.6.24
 	go.uber.org/multierr v1.11.0
 	go.viam.com/api v0.1.289
-	go.viam.com/rdk v0.26.0-rc0.0.20240426210745-a81e17bcc2ec
+	go.viam.com/rdk v0.26.0
 	go.viam.com/utils v0.1.71
 	golang.org/x/sys v0.18.0
 	gotest.tools/gotestsum v1.10.0
