@@ -48,13 +48,12 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 }
 
 func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
-	g.logger.Debugf("Getting Analog pin: %#s", pinName)
 	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
-	g.logger.Infof("Found Analog pin: %#v", pin)
+	g.logger.Debugf("Found Analog pin: %#v", pin)
 	analogPin := analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
 	aio, err := findDevice(analogPin.Address, g.aioDevices)
 	if err != nil {
@@ -66,6 +65,16 @@ func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 	analogPin.outputOffset = aio.i16uOutputOffset
 	analogPin.inputOffset = aio.i16uInputOffset
 	return &analogPin, nil
+}
+
+func (g *gpioChip) GetDigitalInterrupt(pinName string) (*digitalInterrupt, error) {
+	pin := SPIVariable{strVarName: char32(pinName)}
+	err := g.mapNameToAddress(&pin)
+	if err != nil {
+		return nil, err
+	}
+
+	return initializeDigitalInterrupt(pin, g)
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {

@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	commonpb "go.viam.com/api/common/v1"
 	pb "go.viam.com/api/component/board/v1"
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/grpc"
@@ -48,7 +47,7 @@ func newBoard(
 	conf resource.Config,
 	logger logging.Logger,
 ) (board.Board, error) {
-	logger.Info("Starting RevolutionPi Driver v0.0.5")
+	logger.Info("Starting RevolutionPi Driver v0.0.6")
 
 	devPath := filepath.Join("/dev", "piControl0")
 	devPath = filepath.Clean(devPath)
@@ -78,26 +77,36 @@ func newBoard(
 	return &b, nil
 }
 
-// StreamTicks starts a stream of digital interrupt ticks.
-func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []string, ch chan board.Tick, extra map[string]interface{}) error {
+// StreamTicks starts a stream of digital interrupt ticks. The rev pi does not support this feature.
+func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []board.DigitalInterrupt,
+	ch chan board.Tick, extra map[string]interface{},
+) error {
 	return grpc.UnimplementedError
 }
 
-func (b *revolutionPiBoard) AnalogReaderByName(name string) (board.AnalogReader, bool) {
+func (b *revolutionPiBoard) AnalogByName(name string) (board.Analog, error) {
 	pin, err := b.controlChip.GetAnalogPin(name)
 	if err != nil {
 		b.logger.Error(err)
-		return nil, false
+		return nil, err
 	}
 	b.logger.Debugf("Analog Pin: %#v", pin)
-	return pin, true
+	return pin, nil
 }
 
-func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, bool) {
-	return nil, false // Digital interrupts aren't supported.
+// DigitalInterruptByName returns a digital interrupt. The rev pi only supports the Value API.
+func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalInterrupt, error) {
+	interrupt, err := b.controlChip.GetDigitalInterrupt(name)
+	if err != nil {
+		b.logger.Error(err)
+		return nil, err
+	}
+	b.logger.Debugf("Interrupt Pin: %#v", interrupt)
+
+	return interrupt, nil
 }
 
-func (b *revolutionPiBoard) AnalogReaderNames() []string {
+func (b *revolutionPiBoard) AnalogNames() []string {
 	return nil
 }
 
@@ -111,10 +120,6 @@ func (b *revolutionPiBoard) GPIOPinNames() []string {
 
 func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error) {
 	return b.controlChip.GetGPIOPin(pinName)
-}
-
-func (b *revolutionPiBoard) Status(ctx context.Context, extra map[string]interface{}) (*commonpb.BoardStatus, error) {
-	return &commonpb.BoardStatus{}, nil
 }
 
 func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
