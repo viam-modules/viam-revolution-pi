@@ -154,14 +154,18 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 		resp["getStatus"] = "status ok"
 	}
 
-	pinName, okAddr := req["readAddress"].(string)
-	if okAddr {
+	pinMessage, exists := req["readAddress"]
+	if exists {
+		pinName, ok := pinMessage.(string)
+		if !ok {
+			return nil, fmt.Errorf("error performing readAddress: expected string got %v", pinMessage)
+		}
 		pin := SPIVariable{strVarName: char32(pinName)}
 		err := b.controlChip.mapNameToAddress(&pin)
 		if err != nil {
 			return nil, err
 		}
-		b.controlChip.logger.Infof("pin: %#v", pin)
+		b.controlChip.logger.Debugf("pin: %#v", pin)
 		switch pin.i16uLength {
 		case 1:
 			value, err := b.controlChip.getBitValue(int64(pin.i16uAddress), pin.i8uBit)
@@ -175,7 +179,7 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 			if err != nil {
 				return nil, err
 			}
-			b.controlChip.logger.Infof("Read %#d bytes", n)
+			b.controlChip.logger.Debugf("Read %#d bytes", n)
 			resp[pinName] = readFromBuffer(value, n)
 		}
 	}
