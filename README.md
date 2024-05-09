@@ -25,3 +25,13 @@ This will enable pins O_3 and O_9 as PWM pins, which can be used with Viam's API
 ### ADC and DAC
 
 The [AIO Module](https://revolutionpi.com/en/tutorials/overview-aio) is used for analog inputs and outputs on the Revolution Pi. The module currently supports 4 analog readers and 2 analog writers. the RTD analog readers are currently not managed by this module. See [RTD Measurement Documentation](https://revolutionpi.com/en/tutorials/overview-aio/rtd-measurement) for the Revolution Pi for more information.
+
+### DoCommand
+
+A DoCommand is configured to read from any address supported in the Revolution Pi. The command is configured as
+
+```
+{"readAddress": <ADDRESS_NAME>}
+```
+
+This is useful for reading values that would normally not be supported through the board APIs, such as checking `RevPiStatus` or `Core_Temperature`.
