@@ -154,5 +154,31 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 		resp["getStatus"] = "status ok"
 	}
 
+	pinName, okAddr := req["readAddress"].(string)
+	if okAddr {
+		pin := SPIVariable{strVarName: char32(pinName)}
+		err := b.controlChip.mapNameToAddress(&pin)
+		if err != nil {
+			return nil, err
+		}
+		b.controlChip.logger.Infof("pin: %#v", pin)
+		switch pin.i16uLength {
+		case 1:
+			value, err := b.controlChip.getBitValue(int64(pin.i16uAddress), pin.i8uBit)
+			if err != nil {
+				return nil, err
+			}
+			resp[pinName] = value
+		default:
+			value := make([]byte, pin.i16uLength/8)
+			n, err := b.controlChip.fileHandle.ReadAt(value, int64(pin.i16uAddress))
+			if err != nil {
+				return nil, err
+			}
+			b.controlChip.logger.Infof("Read %#d bytes", n)
+			resp[pinName] = readFromBuffer(value, n)
+		}
+	}
+
 	return resp, nil
 }
