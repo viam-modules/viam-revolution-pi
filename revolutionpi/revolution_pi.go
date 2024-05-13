@@ -163,12 +163,14 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 		b.controlChip.logger.Debugf("pin: %#v", pin)
 		switch pin.i16uLength {
 		case 1:
+			// the length of the variable is 1, so we want to read from a specific bit at the address
 			value, err := b.controlChip.getBitValue(int64(pin.i16uAddress), pin.i8uBit)
 			if err != nil {
 				return nil, err
 			}
 			resp[pinName] = value
 		default:
+			// the length of the variable is more than 1, so we want to read a set of bytes from the address
 			value := make([]byte, pin.i16uLength/8)
 			n, err := b.controlChip.fileHandle.ReadAt(value, int64(pin.i16uAddress))
 			if err != nil {
