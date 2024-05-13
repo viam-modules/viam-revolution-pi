@@ -160,7 +160,7 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		b.controlChip.logger.Debugf("pin: %#v", pin)
+		b.controlChip.logger.Debugf("reading pin: %#v", pin)
 		switch pin.i16uLength {
 		case 1:
 			// the length of the variable is 1, so we want to read from a specific bit at the address
