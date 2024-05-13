@@ -19,6 +19,10 @@ import (
 	"go.viam.com/rdk/resource"
 )
 
+const (
+	readAddressKey = "readAddress"
+)
+
 type revolutionPiBoard struct {
 	resource.Named
 	resource.TriviallyReconfigurable
@@ -47,7 +51,7 @@ func newBoard(
 	conf resource.Config,
 	logger logging.Logger,
 ) (board.Board, error) {
-	logger.Info("Starting RevolutionPi Driver v0.0.7")
+	logger.Info("Starting RevolutionPi Driver v0.0.8")
 
 	devPath := filepath.Join("/dev", "piControl0")
 	devPath = filepath.Clean(devPath)
@@ -145,13 +149,42 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 ) (map[string]interface{}, error) {
 	resp := make(map[string]interface{})
 
-	_, ok := req["getStatus"]
-	if ok {
-		err := b.controlChip.showDeviceList()
+	pinMessage, exists := req[readAddressKey]
+	if exists {
+		pinName, ok := pinMessage.(string)
+		if !ok {
+			return nil, fmt.Errorf("error performing readAddress: expected string got %v", pinMessage)
+		}
+		pin := SPIVariable{strVarName: char32(pinName)}
+		err := b.controlChip.mapNameToAddress(&pin)
 		if err != nil {
 			return nil, err
 		}
-		resp["getStatus"] = "status ok"
+		b.controlChip.logger.Debugf("reading pin: %#v", pin)
+		switch pin.i16uLength {
+		case 1:
+			// the length of the variable is 1, so we want to read from a specific bit at the address
+			value, err := b.controlChip.getBitValue(int64(pin.i16uAddress), pin.i8uBit)
+			if err != nil {
+				return nil, err
+			}
+			resp[pinName] = value
+		default:
+			// the length of the variable is more than 1, so we want to read a set of bytes from the address
+			value := make([]byte, pin.i16uLength/8)
+			n, err := b.controlChip.fileHandle.ReadAt(value, int64(pin.i16uAddress))
+			if err != nil {
+				return nil, err
+			}
+			b.controlChip.logger.Debugf("Read %#d bytes", n)
+			resp[pinName], err = readFromBuffer(value, n)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if !exists {
+		return nil, fmt.Errorf("no valid commands found, got %#v", req)
 	}
 
 	return resp, nil
