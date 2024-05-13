@@ -19,6 +19,10 @@ import (
 	"go.viam.com/rdk/resource"
 )
 
+const (
+	readAddressKey = "readAddress"
+)
+
 type revolutionPiBoard struct {
 	resource.Named
 	resource.TriviallyReconfigurable
@@ -145,16 +149,7 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 ) (map[string]interface{}, error) {
 	resp := make(map[string]interface{})
 
-	_, ok := req["getStatus"]
-	if ok {
-		err := b.controlChip.showDeviceList()
-		if err != nil {
-			return nil, err
-		}
-		resp["getStatus"] = "status ok"
-	}
-
-	pinMessage, exists := req["readAddress"]
+	pinMessage, exists := req[readAddressKey]
 	if exists {
 		pinName, ok := pinMessage.(string)
 		if !ok {
@@ -180,8 +175,14 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 				return nil, err
 			}
 			b.controlChip.logger.Debugf("Read %#d bytes", n)
-			resp[pinName] = readFromBuffer(value, n)
+			resp[pinName], err = readFromBuffer(value, n)
+			if err != nil {
+				return nil, err
+			}
 		}
+	}
+	if !exists {
+		return nil, fmt.Errorf("no valid commands found, got %#v", req)
 	}
 
 	return resp, nil
