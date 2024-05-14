@@ -21,10 +21,10 @@ type revolutionPiEncoder struct {
 	pin *digitalInterrupt
 }
 
-// Model is the model triplet for the rev-pi board.
+// EncoderModel is the model triplet for the rev-pi board encoder.
 var EncoderModel = resource.NewModel("viam-labs", "kunbus", "revolutionpi-encoder")
 
-// EncoderConfig is the config for the rev-pi board.
+// EncoderConfig is the config for the rev-pi board encoder.
 type EncoderConfig struct {
 	resource.TriviallyValidateConfig
 	Name string `json:"name,omitempty"`
@@ -77,7 +77,9 @@ func newEncoder(
 	return &revolutionPiEncoder{pin: enc}, nil
 }
 
-func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType, extra map[string]interface{}) (float64, encoder.PositionType, error) {
+func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType,
+	extra map[string]interface{},
+) (float64, encoder.PositionType, error) {
 	return 0, encoder.PositionTypeTicks, nil
 }
 
@@ -90,7 +92,8 @@ func (enc *revolutionPiEncoder) Properties(ctx context.Context, extra map[string
 }
 
 func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
-	return nil, nil
+	resp := make(map[string]interface{})
+	return resp, nil
 }
 
 func (enc *revolutionPiEncoder) Close(ctx context.Context) error {
