@@ -74,7 +74,7 @@ func newEncoder(
 	if !enc.isEncoder {
 		return nil, fmt.Errorf("pin %s is not configured as an encoder", name)
 	}
-	return &revolutionPiEncoder{pin: enc}, nil
+	return &revolutionPiEncoder{Named: conf.ResourceName().AsNamed(), pin: enc}, nil
 }
 
 func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType,
