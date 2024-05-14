@@ -97,5 +97,5 @@ func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]in
 }
 
 func (enc *revolutionPiEncoder) Close(ctx context.Context) error {
-	return nil
+	return enc.pin.controlChip.Close()
 }
