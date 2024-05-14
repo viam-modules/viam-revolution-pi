@@ -20,7 +20,7 @@ type revolutionPiEncoder struct {
 	resource.Named
 	resource.TriviallyReconfigurable
 	pin     *digitalInterrupt
-	zeroPos int32
+	zeroPos atomic.Int32
 }
 
 // EncoderModel is the model triplet for the rev-pi board encoder.
@@ -73,10 +73,11 @@ func newEncoder(
 	if err != nil {
 		return nil, err
 	}
+
 	if !enc.isEncoder {
 		return nil, fmt.Errorf("pin %s is not configured as an encoder", name)
 	}
-	return &revolutionPiEncoder{pin: enc}, nil
+	return &revolutionPiEncoder{Named: conf.ResourceName().AsNamed(), pin: enc}, nil
 }
 
 func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType,
@@ -86,7 +87,7 @@ func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encod
 	if err != nil {
 		return 0, encoder.PositionTypeTicks, err
 	}
-	signedPos := int32(pos) + atomic.LoadInt32(&enc.zeroPos)
+	signedPos := int32(pos) - enc.zeroPos.Load()
 
 	return float64(signedPos), encoder.PositionTypeTicks, nil
 }
@@ -96,7 +97,7 @@ func (enc *revolutionPiEncoder) ResetPosition(ctx context.Context, extra map[str
 	if err != nil {
 		return err
 	}
-	atomic.AddInt32(&enc.zeroPos, int32(pos))
+	enc.zeroPos.Store(int32(pos))
 	return nil
 }
 
@@ -110,5 +111,6 @@ func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]in
 }
 
 func (enc *revolutionPiEncoder) Close(ctx context.Context) error {
-	return nil
+	enc.pin.controlChip.logger.Info("Closing RevPi encoder.")
+	return enc.pin.controlChip.Close()
 }
