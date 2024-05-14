@@ -30,7 +30,7 @@ type digitalInterrupt struct {
 }
 
 type diWrapper struct {
-	pin digitalInterrupt
+	pin *digitalInterrupt
 }
 
 func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*digitalInterrupt, error) {
