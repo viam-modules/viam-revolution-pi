@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 
 	"go.viam.com/rdk/components/encoder"
 	"go.viam.com/rdk/logging"
@@ -18,7 +19,8 @@ import (
 type revolutionPiEncoder struct {
 	resource.Named
 	resource.TriviallyReconfigurable
-	pin *digitalInterrupt
+	pin     *digitalInterrupt
+	zeroPos int32
 }
 
 // EncoderModel is the model triplet for the rev-pi board encoder.
@@ -80,10 +82,21 @@ func newEncoder(
 func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType,
 	extra map[string]interface{},
 ) (float64, encoder.PositionType, error) {
-	return 0, encoder.PositionTypeTicks, nil
+	pos, err := enc.pin.Value()
+	if err != nil {
+		return 0, encoder.PositionTypeTicks, err
+	}
+	signedPos := int32(pos) + atomic.LoadInt32(&enc.zeroPos)
+
+	return float64(signedPos), encoder.PositionTypeTicks, nil
 }
 
 func (enc *revolutionPiEncoder) ResetPosition(ctx context.Context, extra map[string]interface{}) error {
+	pos, err := enc.pin.Value()
+	if err != nil {
+		return err
+	}
+	atomic.AddInt32(&enc.zeroPos, int32(pos))
 	return nil
 }
 

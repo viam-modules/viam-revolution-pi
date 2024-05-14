@@ -91,11 +91,15 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 }
 
 func (di *diWrapper) Value(ctx context.Context, extra map[string]interface{}) (int64, error) {
-	return di.pin.Value()
+	val, err := di.pin.Value()
+	if err != nil {
+		return 0, err
+	}
+	return int64(val), nil
 }
 
 // Note: The revolution pi only supports uint32 counters, while the Value API expects int64.
-func (di *digitalInterrupt) Value() (int64, error) {
+func (di *digitalInterrupt) Value() (uint32, error) {
 	if !di.enabled {
 		return 0, fmt.Errorf("cannot get digital interrupt value, pin %s is not configured as an interrupt", di.pinName)
 	}
@@ -110,7 +114,7 @@ func (di *digitalInterrupt) Value() (int64, error) {
 		return 0, fmt.Errorf("expected 4 bytes, got %#v", b)
 	}
 	val := binary.LittleEndian.Uint32(b)
-	return int64(val), nil
+	return val, nil
 }
 
 func (di *diWrapper) Name() string {
