@@ -7,6 +7,10 @@
     {
       "api": "rdk:component:board",
       "model": "viam-labs:kunbus:revolutionpi"
+    },
+    {
+      "api": "rdk:component:encoder",
+      "model": "viam-labs:kunbus:revolutionpi-encoder"
     }
   ],
   "entrypoint": "viam-revolution-pi"

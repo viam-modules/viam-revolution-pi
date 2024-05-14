@@ -81,7 +81,7 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 	// check if the pin is configured as a counter
 	// b[0] == 0 means the interrupt is disabled, b[0] == 3 means the pin is configured for encoder mode
 	if b[0] == 0 || (b[0] == 3 && !isEncoder) {
-		return &digitalInterrupt{}, errors.New("pin is not configured as a counter")
+		return &digitalInterrupt{}, fmt.Errorf("pin %s is not configured as a counter", di.pinName)
 	}
 
 	di.enabled = true

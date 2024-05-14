@@ -5,7 +5,6 @@ package revolutionpi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -25,17 +24,17 @@ type revolutionPiEncoder struct {
 // Model is the model triplet for the rev-pi board.
 var EncoderModel = resource.NewModel("viam-labs", "kunbus", "revolutionpi-encoder")
 
-// // Config is the config for the rev-pi board.
-// type Config struct {
-// 	resource.TriviallyValidateConfig
-// 	Attributes utils.AttributeMap `json:"attributes,omitempty"`
-// }
+// EncoderConfig is the config for the rev-pi board.
+type EncoderConfig struct {
+	resource.TriviallyValidateConfig
+	Name string `json:"name,omitempty"`
+}
 
 func init() {
 	resource.RegisterComponent(
 		encoder.API,
 		EncoderModel,
-		resource.Registration[encoder.Encoder, *Config]{Constructor: newEncoder})
+		resource.Registration[encoder.Encoder, *EncoderConfig]{Constructor: newEncoder})
 }
 
 func newEncoder(
@@ -44,6 +43,10 @@ func newEncoder(
 	conf resource.Config,
 	logger logging.Logger,
 ) (encoder.Encoder, error) {
+	svcConfig, err := resource.NativeConfig[*EncoderConfig](conf)
+	if err != nil {
+		return nil, err
+	}
 	devPath := filepath.Join("/dev", "piControl0")
 	devPath = filepath.Clean(devPath)
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
@@ -57,7 +60,7 @@ func newEncoder(
 	if err != nil {
 		return nil, err
 	}
-	name := "InputMode_5"
+	name := svcConfig.Name
 	pin := SPIVariable{strVarName: char32(name)}
 	err = gpioChip.mapNameToAddress(&pin)
 	if err != nil {
@@ -69,7 +72,7 @@ func newEncoder(
 		return nil, err
 	}
 	if !enc.isEncoder {
-		return nil, errors.New("address is not configured as an encoder")
+		return nil, fmt.Errorf("pin %s is not configured as an encoder", name)
 	}
 	return &revolutionPiEncoder{pin: enc}, nil
 }
@@ -83,14 +86,13 @@ func (enc *revolutionPiEncoder) ResetPosition(ctx context.Context, extra map[str
 }
 
 func (enc *revolutionPiEncoder) Properties(ctx context.Context, extra map[string]interface{}) (encoder.Properties, error) {
-	props := encoder.Properties{TicksCountSupported: true, AngleDegreesSupported: false}
-	return props, nil
+	return encoder.Properties{TicksCountSupported: true, AngleDegreesSupported: false}, nil
 }
 
-func (enc revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
+func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
 	return nil, nil
 }
 
-func (enc revolutionPiEncoder) Close(ctx context.Context) error {
+func (enc *revolutionPiEncoder) Close(ctx context.Context) error {
 	return nil
 }

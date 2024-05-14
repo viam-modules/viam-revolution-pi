@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"go.viam.com/rdk/components/board"
+	"go.viam.com/rdk/components/encoder"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/module"
 	"go.viam.com/utils"
@@ -25,6 +26,10 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 	}
 
 	err = customModule.AddModelFromRegistry(ctx, board.API, revolutionpi.Model)
+	if err != nil {
+		return err
+	}
+	err = customModule.AddModelFromRegistry(ctx, encoder.API, revolutionpi.EncoderModel)
 	if err != nil {
 		return err
 	}
