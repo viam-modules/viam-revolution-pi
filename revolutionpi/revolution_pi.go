@@ -106,8 +106,7 @@ func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalIn
 		return nil, err
 	}
 	b.logger.Debugf("Interrupt Pin: %#v", interrupt)
-
-	return interrupt, nil
+	return &diWrapper{pin: interrupt}, nil
 }
 
 func (b *revolutionPiBoard) AnalogNames() []string {

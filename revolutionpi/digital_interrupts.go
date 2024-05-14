@@ -25,10 +25,15 @@ type digitalInterrupt struct {
 	outputOffset     uint16
 	inputOffset      uint16
 	enabled          bool
+	isEncoder        bool
 	interruptAddress uint16
 }
 
-func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip) (*digitalInterrupt, error) {
+type diWrapper struct {
+	pin digitalInterrupt
+}
+
+func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*digitalInterrupt, error) {
 	di := digitalInterrupt{
 		pinName: str32(pin.strVarName), address: pin.i16uAddress,
 		length: pin.i16uLength, bitPosition: pin.i8uBit, controlChip: g,
@@ -75,16 +80,22 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip) (*digitalInterrupt
 
 	// check if the pin is configured as a counter
 	// b[0] == 0 means the interrupt is disabled, b[0] == 3 means the pin is configured for encoder mode
-	if b[0] == 0 || b[0] == 3 {
+	if b[0] == 0 || (b[0] == 3 && !isEncoder) {
 		return &digitalInterrupt{}, errors.New("pin is not configured as a counter")
 	}
+
 	di.enabled = true
+	di.isEncoder = b[0] == 3
 
 	return &di, nil
 }
 
+func (di *diWrapper) Value(ctx context.Context, extra map[string]interface{}) (int64, error) {
+	return di.pin.Value()
+}
+
 // Note: The revolution pi only supports uint32 counters, while the Value API expects int64.
-func (di *digitalInterrupt) Value(ctx context.Context, extra map[string]interface{}) (int64, error) {
+func (di *digitalInterrupt) Value() (int64, error) {
 	if !di.enabled {
 		return 0, fmt.Errorf("cannot get digital interrupt value, pin %s is not configured as an interrupt", di.pinName)
 	}
@@ -102,13 +113,13 @@ func (di *digitalInterrupt) Value(ctx context.Context, extra map[string]interfac
 	return int64(val), nil
 }
 
-func (di *digitalInterrupt) Name() string {
-	return di.pinName
+func (di *diWrapper) Name() string {
+	return di.pin.pinName
 }
 
-func (di *digitalInterrupt) RemoveCallback(c chan board.Tick) {}
+func (di *diWrapper) RemoveCallback(c chan board.Tick) {}
 
-func (di *digitalInterrupt) Close(ctx context.Context) error {
+func (di *diWrapper) Close(ctx context.Context) error {
 	return nil
 }
 
