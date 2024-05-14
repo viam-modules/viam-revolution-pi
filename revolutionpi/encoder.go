@@ -27,7 +27,7 @@ var EncoderModel = resource.NewModel("viam-labs", "kunbus", "revolutionpi-encode
 // EncoderConfig is the config for the rev-pi board encoder.
 type EncoderConfig struct {
 	resource.TriviallyValidateConfig
-	Name string `json:"name,omitempty"`
+	Name string `json:"address_name,omitempty"`
 }
 
 func init() {
