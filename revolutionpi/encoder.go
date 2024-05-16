@@ -16,7 +16,7 @@ import (
 	"go.viam.com/utils"
 )
 
-// revolutionPiEncoder wraps a digital interrupt pin with the Encoder interface
+// revolutionPiEncoder wraps a digital interrupt pin with the Encoder interface.
 type revolutionPiEncoder struct {
 	resource.Named
 	resource.AlwaysRebuild
@@ -38,6 +38,7 @@ func init() {
 		resource.Registration[encoder.Encoder, *EncoderConfig]{Constructor: newEncoder})
 }
 
+// Validate validates the EncoderConfig.
 func (cfg *EncoderConfig) Validate(path string) ([]string, error) {
 	if cfg.Name == "" {
 		return nil, utils.NewConfigValidationFieldRequiredError(path, "pin_name")
@@ -61,20 +62,20 @@ func newEncoder(
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return nil, err
 	}
-	gpioChip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
+	chip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
 
-	err = gpioChip.showDeviceList()
+	err = chip.showDeviceList()
 	if err != nil {
 		return nil, err
 	}
 	name := svcConfig.Name
 	pin := SPIVariable{strVarName: char32(name)}
-	err = gpioChip.mapNameToAddress(&pin)
+	err = chip.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
 
-	enc, err := initializeDigitalInterrupt(pin, &gpioChip, true)
+	enc, err := initializeDigitalInterrupt(pin, &chip, true)
 	if err != nil {
 		return nil, err
 	}

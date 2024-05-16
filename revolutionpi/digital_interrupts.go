@@ -31,7 +31,7 @@ type digitalInterrupt struct {
 	interruptAddress uint16
 }
 
-// diWrapper wraps a digital interrupt pin with the DigitalInterrupt interface
+// diWrapper wraps a digital interrupt pin with the DigitalInterrupt interface.
 type diWrapper struct {
 	pin *digitalInterrupt
 }
