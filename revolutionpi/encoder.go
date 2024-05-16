@@ -13,11 +13,12 @@ import (
 	"go.viam.com/rdk/components/encoder"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/utils"
 )
 
 type revolutionPiEncoder struct {
 	resource.Named
-	resource.TriviallyReconfigurable
+	resource.AlwaysRebuild
 	pin *digitalInterrupt
 }
 
@@ -26,8 +27,7 @@ var EncoderModel = resource.NewModel("viam-labs", "kunbus", "revolutionpi-encode
 
 // EncoderConfig is the config for the rev-pi board encoder.
 type EncoderConfig struct {
-	resource.TriviallyValidateConfig
-	Name string `json:"address_name,omitempty"`
+	Name string `json:"pin_name"`
 }
 
 func init() {
@@ -35,6 +35,13 @@ func init() {
 		encoder.API,
 		EncoderModel,
 		resource.Registration[encoder.Encoder, *EncoderConfig]{Constructor: newEncoder})
+}
+
+func (cfg *EncoderConfig) Validate(path string) ([]string, error) {
+	if cfg.Name == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "pin_name")
+	}
+	return []string{}, nil
 }
 
 func newEncoder(
