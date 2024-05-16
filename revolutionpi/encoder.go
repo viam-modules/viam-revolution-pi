@@ -16,6 +16,7 @@ import (
 	"go.viam.com/utils"
 )
 
+// revolutionPiEncoder wraps a digital interrupt pin with the Encoder interface
 type revolutionPiEncoder struct {
 	resource.Named
 	resource.AlwaysRebuild
@@ -54,8 +55,7 @@ func newEncoder(
 	if err != nil {
 		return nil, err
 	}
-	devPath := filepath.Join("/dev", "piControl0")
-	devPath = filepath.Clean(devPath)
+	devPath := filepath.Clean(filepath.Join("/dev", "piControl0"))
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
@@ -84,12 +84,14 @@ func newEncoder(
 	return &revolutionPiEncoder{Named: conf.ResourceName().AsNamed(), pin: enc}, nil
 }
 
+// TODO implementing in https://viam.atlassian.net/browse/RSDK-7595
 func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType,
 	extra map[string]interface{},
 ) (float64, encoder.PositionType, error) {
 	return 0, encoder.PositionTypeTicks, nil
 }
 
+// TODO implementing in https://viam.atlassian.net/browse/RSDK-7595
 func (enc *revolutionPiEncoder) ResetPosition(ctx context.Context, extra map[string]interface{}) error {
 	return nil
 }
@@ -98,6 +100,7 @@ func (enc *revolutionPiEncoder) Properties(ctx context.Context, extra map[string
 	return encoder.Properties{TicksCountSupported: true, AngleDegreesSupported: false}, nil
 }
 
+// TODO implementing in https://viam.atlassian.net/browse/RSDK-7595
 func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
 	resp := make(map[string]interface{})
 	return resp, nil

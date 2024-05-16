@@ -16,6 +16,8 @@ const (
 	inputModeOffset = 88
 )
 
+// digitalInterrupt is the struct used for configuring an interrupt or encoder.
+// encoders and digital interrupts are configured the same way in the revolution pi.
 type digitalInterrupt struct {
 	pinName          string // Variable name
 	address          uint16 // address of the byte in the process image
@@ -29,6 +31,7 @@ type digitalInterrupt struct {
 	interruptAddress uint16
 }
 
+// diWrapper wraps a digital interrupt pin with the DigitalInterrupt interface
 type diWrapper struct {
 	pin *digitalInterrupt
 }
