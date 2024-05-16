@@ -18,6 +18,10 @@ const (
 
 // digitalInterrupt is the struct used for configuring an interrupt or encoder.
 // encoders and digital interrupts are configured the same way in the revolution pi.
+// the encoder & digital interrupt interface cannot be satisfied by the same struct due
+// to both interfaces requiring different Name() methods.
+// Go does not allow for overloads, so instead the revolutionPiEncoder and diWrapper structs
+// are used to implement their respective interfaces.
 type digitalInterrupt struct {
 	pinName          string // Variable name
 	address          uint16 // address of the byte in the process image
