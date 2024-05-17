@@ -93,8 +93,10 @@ func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encod
 	if err != nil {
 		return 0, encoder.PositionTypeTicks, err
 	}
+	// rev pi encoder values are signed int32
 	signedPos := int32(pos) - enc.zeroPos.Load()
 
+	// encoder api expects float64
 	return float64(signedPos), encoder.PositionTypeTicks, nil
 }
 
