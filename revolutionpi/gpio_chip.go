@@ -54,17 +54,8 @@ func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 		return nil, err
 	}
 	g.logger.Debugf("Found Analog pin: %#v", pin)
-	analogPin := analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
-	aio, err := findDevice(analogPin.Address, g.aioDevices)
-	if err != nil {
-		analogPin.ControlChip.logger.Debug("pin is not from a supported GPIO board")
-		return nil, err
-	}
 
-	// store the input & output offsets of the board for quick reference
-	analogPin.outputOffset = aio.i16uOutputOffset
-	analogPin.inputOffset = aio.i16uInputOffset
-	return &analogPin, nil
+	return initializeAnalogPin(pin, g)
 }
 
 func (g *gpioChip) GetDigitalInterrupt(pinName string) (*digitalInterrupt, error) {

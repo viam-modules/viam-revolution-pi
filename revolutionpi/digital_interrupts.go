@@ -8,8 +8,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-
-	"go.viam.com/rdk/components/board"
 )
 
 const (
@@ -122,12 +120,6 @@ func (di *digitalInterrupt) Value() (int64, error) {
 
 func (di *diWrapper) Name() string {
 	return di.pin.pinName
-}
-
-func (di *diWrapper) RemoveCallback(c chan board.Tick) {}
-
-func (di *diWrapper) Close(ctx context.Context) error {
-	return nil
 }
 
 // addresses at 6 to 70 + inputOffset.
