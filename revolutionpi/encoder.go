@@ -12,14 +12,16 @@ import (
 	"sync/atomic"
 
 	"go.viam.com/rdk/components/encoder"
+	"go.viam.com/rdk/grpc"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/utils"
 )
 
+// revolutionPiEncoder wraps a digital interrupt pin with the Encoder interface.
 type revolutionPiEncoder struct {
 	resource.Named
-	resource.TriviallyReconfigurable
+	resource.AlwaysRebuild
 	pin     *digitalInterrupt
 	zeroPos atomic.Int32
 }
@@ -110,8 +112,7 @@ func (enc *revolutionPiEncoder) Properties(ctx context.Context, extra map[string
 }
 
 func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
-	resp := make(map[string]interface{})
-	return resp, nil
+	return nil, grpc.UnimplementedError
 }
 
 func (enc *revolutionPiEncoder) Close(ctx context.Context) error {
