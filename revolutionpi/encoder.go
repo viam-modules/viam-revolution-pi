@@ -14,6 +14,7 @@ import (
 	"go.viam.com/rdk/components/encoder"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/utils"
 )
 
 type revolutionPiEncoder struct {
@@ -28,8 +29,7 @@ var EncoderModel = resource.NewModel("viam-labs", "kunbus", "revolutionpi-encode
 
 // EncoderConfig is the config for the rev-pi board encoder.
 type EncoderConfig struct {
-	resource.TriviallyValidateConfig
-	Name string `json:"address_name,omitempty"`
+	Name string `json:"pin_name"`
 }
 
 func init() {
@@ -37,6 +37,14 @@ func init() {
 		encoder.API,
 		EncoderModel,
 		resource.Registration[encoder.Encoder, *EncoderConfig]{Constructor: newEncoder})
+}
+
+// Validate validates the EncoderConfig.
+func (cfg *EncoderConfig) Validate(path string) ([]string, error) {
+	if cfg.Name == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "pin_name")
+	}
+	return []string{}, nil
 }
 
 func newEncoder(
@@ -49,34 +57,30 @@ func newEncoder(
 	if err != nil {
 		return nil, err
 	}
-	devPath := filepath.Join("/dev", "piControl0")
-	devPath = filepath.Clean(devPath)
+	devPath := filepath.Clean(filepath.Join("/dev", "piControl0"))
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return nil, err
 	}
-	gpioChip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
+	chip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
 
-	err = gpioChip.showDeviceList()
+	err = chip.showDeviceList()
 	if err != nil {
 		return nil, err
 	}
 	name := svcConfig.Name
 	pin := SPIVariable{strVarName: char32(name)}
-	err = gpioChip.mapNameToAddress(&pin)
+	err = chip.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
 	}
 
-	enc, err := initializeDigitalInterrupt(pin, &gpioChip, true)
+	enc, err := initializeDigitalInterrupt(pin, &chip, true)
 	if err != nil {
 		return nil, err
 	}
 
-	if !enc.isEncoder {
-		return nil, fmt.Errorf("pin %s is not configured as an encoder", name)
-	}
 	return &revolutionPiEncoder{Named: conf.ResourceName().AsNamed(), pin: enc}, nil
 }
 
@@ -111,6 +115,5 @@ func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]in
 }
 
 func (enc *revolutionPiEncoder) Close(ctx context.Context) error {
-	enc.pin.controlChip.logger.Info("Closing RevPi encoder.")
 	return enc.pin.controlChip.Close()
 }
