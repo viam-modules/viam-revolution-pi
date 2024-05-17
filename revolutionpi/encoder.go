@@ -79,9 +79,7 @@ func newEncoder(
 	if err != nil {
 		return nil, err
 	}
-	if !enc.isEncoder {
-		return nil, fmt.Errorf("pin %s is not configured as an encoder", name)
-	}
+
 	return &revolutionPiEncoder{Named: conf.ResourceName().AsNamed(), pin: enc}, nil
 }
 

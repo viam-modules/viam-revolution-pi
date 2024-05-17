@@ -31,7 +31,6 @@ type digitalInterrupt struct {
 	outputOffset     uint16
 	inputOffset      uint16
 	enabled          bool
-	isEncoder        bool
 	interruptAddress uint16
 }
 
@@ -89,10 +88,11 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 	// b[0] == 0 means the interrupt is disabled, b[0] == 3 means the pin is configured for encoder mode
 	if b[0] == 0 || (b[0] == 3 && !isEncoder) {
 		return &digitalInterrupt{}, fmt.Errorf("pin %s is not configured as a counter", di.pinName)
+	} else if b[0] != 3 && isEncoder {
+		return &digitalInterrupt{}, fmt.Errorf("pin %s is not configured as an encoder", di.pinName)
 	}
 
 	di.enabled = true
-	di.isEncoder = b[0] == 3
 
 	return &di, nil
 }
