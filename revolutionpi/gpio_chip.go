@@ -74,7 +74,7 @@ func (g *gpioChip) GetDigitalInterrupt(pinName string) (*digitalInterrupt, error
 		return nil, err
 	}
 
-	return initializeDigitalInterrupt(pin, g)
+	return initializeDigitalInterrupt(pin, g, false)
 }
 
 func (g *gpioChip) mapNameToAddress(pin *SPIVariable) error {
