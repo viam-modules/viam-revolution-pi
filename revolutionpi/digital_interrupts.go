@@ -31,7 +31,6 @@ type digitalInterrupt struct {
 	outputOffset     uint16
 	inputOffset      uint16
 	enabled          bool
-	isEncoder        bool
 	interruptAddress uint16
 }
 
