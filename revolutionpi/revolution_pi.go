@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	readAddressKey = "readAddress"
+	readParameterKey = "readParameter"
 )
 
 type revolutionPiBoard struct {
@@ -148,11 +148,11 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 ) (map[string]interface{}, error) {
 	resp := make(map[string]interface{})
 
-	pinMessage, exists := req[readAddressKey]
+	pinMessage, exists := req[readParameterKey]
 	if exists {
 		pinName, ok := pinMessage.(string)
 		if !ok {
-			return nil, fmt.Errorf("error performing readAddress: expected string got %v", pinMessage)
+			return nil, fmt.Errorf("error performing %s: expected string got %v", readParameterKey, pinMessage)
 		}
 		pin := SPIVariable{strVarName: char32(pinName)}
 		err := b.controlChip.mapNameToAddress(&pin)
