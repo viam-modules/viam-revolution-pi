@@ -100,6 +100,7 @@ func (pin *analogPin) Read(ctx context.Context, extra map[string]interface{}) (b
 	val := binary.LittleEndian.Uint16(b)
 	// NOTE: we currently assume that the input multiplier, divisor, and offset have not been modified
 	// the min and max values will change if a user modifies these.
+	// step size converts mV -> V and micro Amps -> mA
 	analogVal := board.AnalogValue{Value: int(val), Min: float32(pin.info.min), Max: float32(pin.info.max), StepSize: 0.001}
 	return analogVal, nil
 }
