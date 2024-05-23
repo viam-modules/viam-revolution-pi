@@ -67,7 +67,7 @@ func (g *gpioChip) GetAnalogPin(pinName string) (*analogPin, error) {
 	return &analogPin, nil
 }
 
-func (g *gpioChip) GetDigitalInterrupt(pinName string) (*digitalInterrupt, error) {
+func (g *gpioChip) GetDigitalInterrupt(pinName string) (*counterPin, error) {
 	pin := SPIVariable{strVarName: char32(pinName)}
 	err := g.mapNameToAddress(&pin)
 	if err != nil {

@@ -16,13 +16,13 @@ const (
 	inputModeOffset = 88
 )
 
-// digitalInterrupt is the struct used for configuring an interrupt or encoder.
+// counterPin is the struct used for configuring an interrupt or encoder.
 // encoders and digital interrupts are configured the same way in the revolution pi.
 // the encoder & digital interrupt interface cannot be satisfied by the same struct due
 // to both interfaces requiring different Name() methods.
 // Go does not allow for overloads, so instead the revolutionPiEncoder and diWrapper structs
 // are used to implement their respective interfaces.
-type digitalInterrupt struct {
+type counterPin struct {
 	pinName          string // Variable name
 	address          uint16 // address of the byte in the process image
 	length           uint16 // length of the variable in bits. Possible values are 1, 8, 16 and 32
@@ -36,18 +36,18 @@ type digitalInterrupt struct {
 
 // diWrapper wraps a digital interrupt pin with the DigitalInterrupt interface.
 type diWrapper struct {
-	pin *digitalInterrupt
+	pin *counterPin
 }
 
-func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*digitalInterrupt, error) {
-	di := digitalInterrupt{
+func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*counterPin, error) {
+	di := counterPin{
 		pinName: str32(pin.strVarName), address: pin.i16uAddress,
 		length: pin.i16uLength, bitPosition: pin.i8uBit, controlChip: g,
 	}
 	g.logger.Debugf("setting up digital interrupt pin: %v", di)
 	dio, err := findDevice(di.address, g.dioDevices)
 	if err != nil {
-		return &digitalInterrupt{}, err
+		return &counterPin{}, err
 	}
 	// store the input & output offsets of the board for quick reference
 	di.outputOffset = dio.i16uOutputOffset
@@ -70,26 +70,26 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 		}
 		di.interruptAddress = di.inputOffset + inputWordToCounterOffset + addressInputMode*4
 	default:
-		return &digitalInterrupt{}, errors.New("pin is not a digital input pin")
+		return &counterPin{}, errors.New("pin is not a digital input pin")
 	}
 
 	b := make([]byte, 1)
 	// read from the input mode addresses to see if the pin is configured for interrupts
 	n, err := di.controlChip.fileHandle.ReadAt(b, int64(di.inputOffset+inputModeOffset+addressInputMode))
 	if err != nil {
-		return &digitalInterrupt{}, err
+		return &counterPin{}, err
 	}
 	if n != 1 {
-		return &digitalInterrupt{}, errors.New("unable to read digital input pin configuration")
+		return &counterPin{}, errors.New("unable to read digital input pin configuration")
 	}
 	di.controlChip.logger.Debugf("Current Pin configuration: %#d", b)
 
 	// check if the pin is configured as a counter
 	// b[0] == 0 means the interrupt is disabled, b[0] == 3 means the pin is configured for encoder mode
 	if b[0] == 0 || (b[0] == 3 && !isEncoder) {
-		return &digitalInterrupt{}, fmt.Errorf("pin %s is not configured as a counter", di.pinName)
+		return &counterPin{}, fmt.Errorf("pin %s is not configured as a counter", di.pinName)
 	} else if b[0] != 3 && isEncoder {
-		return &digitalInterrupt{}, fmt.Errorf("pin %s is not configured as an encoder", di.pinName)
+		return &counterPin{}, fmt.Errorf("pin %s is not configured as an encoder", di.pinName)
 	}
 
 	di.enabled = true
@@ -98,11 +98,15 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 }
 
 func (di *diWrapper) Value(ctx context.Context, extra map[string]interface{}) (int64, error) {
-	return di.pin.Value()
+	val, err := di.pin.Value()
+	if err != nil {
+		return 0, err
+	}
+	return int64(val), nil
 }
 
 // Note: The revolution pi only supports uint32 counters, while the Value API expects int64.
-func (di *digitalInterrupt) Value() (int64, error) {
+func (di *counterPin) Value() (uint32, error) {
 	if !di.enabled {
 		return 0, fmt.Errorf("cannot get digital interrupt value, pin %s is not configured as an interrupt", di.pinName)
 	}
@@ -117,7 +121,7 @@ func (di *digitalInterrupt) Value() (int64, error) {
 		return 0, fmt.Errorf("expected 4 bytes, got %#v", b)
 	}
 	val := binary.LittleEndian.Uint32(b)
-	return int64(val), nil
+	return val, nil
 }
 
 func (di *diWrapper) Name() string {
@@ -131,11 +135,11 @@ func (di *diWrapper) Close(ctx context.Context) error {
 }
 
 // addresses at 6 to 70 + inputOffset.
-func (di *digitalInterrupt) isInputCounter() bool {
+func (di *counterPin) isInputCounter() bool {
 	return di.address >= di.inputOffset+inputWordToCounterOffset && di.address < di.outputOffset
 }
 
 // addresses at 0 and 1 + inputOffset.
-func (di *digitalInterrupt) isDigitalInput() bool {
+func (di *counterPin) isDigitalInput() bool {
 	return di.address == di.inputOffset || di.address == di.inputOffset+1
 }

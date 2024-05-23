@@ -9,8 +9,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 
 	"go.viam.com/rdk/components/encoder"
+	"go.viam.com/rdk/grpc"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/utils"
@@ -20,7 +22,8 @@ import (
 type revolutionPiEncoder struct {
 	resource.Named
 	resource.AlwaysRebuild
-	pin *digitalInterrupt
+	pin     *counterPin
+	zeroPos atomic.Int32
 }
 
 // EncoderModel is the model triplet for the rev-pi board encoder.
@@ -83,15 +86,26 @@ func newEncoder(
 	return &revolutionPiEncoder{Named: conf.ResourceName().AsNamed(), pin: enc}, nil
 }
 
-// TODO implementing in https://viam.atlassian.net/browse/RSDK-7595
 func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType,
 	extra map[string]interface{},
 ) (float64, encoder.PositionType, error) {
-	return 0, encoder.PositionTypeTicks, nil
+	pos, err := enc.pin.Value()
+	if err != nil {
+		return 0, encoder.PositionTypeTicks, err
+	}
+	// rev pi encoder values are int32, but Value() returns uint32. we cast the pos to int32 to fix this
+	signedPos := int32(pos) - enc.zeroPos.Load()
+
+	// encoder api expects float64
+	return float64(signedPos), encoder.PositionTypeTicks, nil
 }
 
-// TODO implementing in https://viam.atlassian.net/browse/RSDK-7595
 func (enc *revolutionPiEncoder) ResetPosition(ctx context.Context, extra map[string]interface{}) error {
+	pos, err := enc.pin.Value()
+	if err != nil {
+		return err
+	}
+	enc.zeroPos.Store(int32(pos))
 	return nil
 }
 
@@ -99,10 +113,8 @@ func (enc *revolutionPiEncoder) Properties(ctx context.Context, extra map[string
 	return encoder.Properties{TicksCountSupported: true, AngleDegreesSupported: false}, nil
 }
 
-// TODO implementing in https://viam.atlassian.net/browse/RSDK-7595
 func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
-	resp := make(map[string]interface{})
-	return resp, nil
+	return nil, grpc.UnimplementedError
 }
 
 func (enc *revolutionPiEncoder) Close(ctx context.Context) error {
