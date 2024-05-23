@@ -22,7 +22,7 @@ import (
 type revolutionPiEncoder struct {
 	resource.Named
 	resource.AlwaysRebuild
-	pin     *digitalInterrupt
+	pin     *counterPin
 	zeroPos atomic.Int32
 }
 
@@ -93,7 +93,7 @@ func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encod
 	if err != nil {
 		return 0, encoder.PositionTypeTicks, err
 	}
-	// rev pi encoder values are signed int32
+	// rev pi encoder values are int32, but Value() returns uint32. we cast the pos to int32 to fix this
 	signedPos := int32(pos) - enc.zeroPos.Load()
 
 	// encoder api expects float64
