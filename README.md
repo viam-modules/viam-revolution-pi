@@ -31,7 +31,7 @@ The [AIO Module](https://revolutionpi.com/en/tutorials/overview-aio) is used for
 A DoCommand is configured to read from any address supported in the Revolution Pi. The command is configured as
 
 ```
-{"readAddress": <ADDRESS_NAME>}
+{"readParameter": <PARAMETER_NAME>}
 ```
 
 This is useful for reading values that would normally not be supported through the board APIs, such as checking `RevPiStatus` or `Core_Temperature`.
