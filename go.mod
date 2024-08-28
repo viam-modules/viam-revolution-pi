@@ -1,4 +1,4 @@
-module viam-labs/viam-revolution-pi
+module viam/viam-revolution-pi
 
 go 1.21
 

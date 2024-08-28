@@ -9,7 +9,7 @@ import (
 )
 
 // Model is the model triplet for the rev-pi board.
-var Model = resource.NewModel("viam-labs", "kunbus", "revolutionpi")
+var Model = resource.NewModel("viam", "kunbus", "revolutionpi")
 
 // Config is the config for the rev-pi board.
 type Config struct {
