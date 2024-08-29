@@ -27,7 +27,7 @@ type revolutionPiEncoder struct {
 }
 
 // EncoderModel is the model triplet for the rev-pi board encoder.
-var EncoderModel = resource.NewModel("viam-labs", "kunbus", "revolutionpi-encoder")
+var EncoderModel = resource.NewModel("viam", "kunbus", "revolutionpi-encoder")
 
 // EncoderConfig is the config for the rev-pi board encoder.
 type EncoderConfig struct {

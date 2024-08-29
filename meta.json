@@ -1,16 +1,16 @@
 {
-  "module_id": "viam-labs:viam-revolution-pi",
+  "module_id": "viam:viam-revolution-pi",
   "visibility": "public",
-  "url": "https://github.com/viam-labs/viam-revolution-pi",
+  "url": "https://github.com/viam-modules/viam-revolution-pi",
   "description": "A modular component for the Revolution Pi",
   "models": [
     {
       "api": "rdk:component:board",
-      "model": "viam-labs:kunbus:revolutionpi"
+      "model": "viam:kunbus:revolutionpi"
     },
     {
       "api": "rdk:component:encoder",
-      "model": "viam-labs:kunbus:revolutionpi-encoder"
+      "model": "viam:kunbus:revolutionpi-encoder"
     }
   ],
   "entrypoint": "viam-revolution-pi"

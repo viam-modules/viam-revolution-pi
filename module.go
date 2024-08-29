@@ -12,7 +12,7 @@ import (
 	"go.viam.com/rdk/module"
 	"go.viam.com/utils"
 
-	"viam-labs/viam-revolution-pi/revolutionpi"
+	"viam/viam-revolution-pi/revolutionpi"
 )
 
 func main() {
