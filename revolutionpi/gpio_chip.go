@@ -104,6 +104,11 @@ func (g *gpioChip) showDeviceList() error {
 				g.logger.Debugf("AIO device info: %v", deviceInfoList[i])
 				g.aioDevices = append(g.aioDevices, deviceInfoList[i])
 			}
+			if deviceInfoList[i].isMIO() {
+				g.logger.Debugf("MIO device info: %v", deviceInfoList[i])
+				g.aioDevices = append(g.aioDevices, deviceInfoList[i])
+				g.dioDevices = append(g.dioDevices, deviceInfoList[i])
+			}
 		} else {
 			checkConnected := deviceInfoList[i].i16uModuleType&piControlNotConnected == piControlNotConnected
 			if checkConnected {
