@@ -31,6 +31,7 @@ func (g *gpioChip) GetGPIOPin(pinName string) (*gpioPin, error) {
 	g.logger.Debugf("Found GPIO pin: %#v", pin)
 	gpioPin := gpioPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, BitPosition: pin.i8uBit, Length: pin.i16uLength, ControlChip: g}
 	dio, err := findDevice(gpioPin.Address, g.dioDevices)
+	g.logger.Debugf("Found DIO device: %#v", g.dioDevices)
 	if err != nil {
 		gpioPin.ControlChip.logger.Debug("pin is not from a supported GPIO board")
 		return nil, err
