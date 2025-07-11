@@ -2,9 +2,11 @@
 
 A modular component for Viam that adds support for the Revolution Pi PLC platform
 
-## setup
+## Setup and Configuration
 
-Please follow the [Revolution Pi](https://revolutionpi.com/en/tutorials/quick-start-guide) setup documentation to configure your Revolution Pi. The majority of the configuration for a Revolution Pi occurs within [PiCtory](https://revolutionpi.com/en/tutorials/what-is-pictory). The module does not require any additional component configuration.
+Please follow the [Revolution Pi](https://revolutionpi.com/en/tutorials/quick-start-guide) setup documentation to configure your Revolution Pi. The majority of the configuration for a Revolution Pi occurs within [PiCtory](https://revolutionpi.com/en/tutorials/what-is-pictory).
+
+The `board` component does not require any additional configuration.
 
 ### GPIO and PWM
 

@@ -3,10 +3,12 @@
   "visibility": "public",
   "url": "https://github.com/viam-modules/viam-revolution-pi",
   "description": "A modular component for the Revolution Pi",
+  "markdown_link": "README.md",
   "models": [
     {
       "api": "rdk:component:board",
-      "model": "viam:kunbus:revolutionpi"
+      "model": "viam:kunbus:revolutionpi",
+      "markdown_link": "README.md#setup-and-configuration"
     },
     {
       "api": "rdk:component:encoder",
