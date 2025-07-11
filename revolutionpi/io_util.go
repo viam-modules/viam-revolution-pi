@@ -94,7 +94,7 @@ func (dev *SDeviceInfo) isAIO() bool {
 
 // isMIO checks whether the module is an MIO module, which can be used with our Analog and GPIO related apis.
 func (dev *SDeviceInfo) isMIO() bool {
-	return dev.i16uModuleType == 103
+	return dev.i16uModuleType == 118
 }
 
 // getModuleName gets the module name based on the module type.
