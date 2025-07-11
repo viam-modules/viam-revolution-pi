@@ -92,7 +92,7 @@ func (dev *SDeviceInfo) isAIO() bool {
 	return dev.i16uModuleType == 103
 }
 
-// isMIO checks whether the module is an MIO module, which can be used with our Analog and GPIO related apis.
+// isMIO checks whether the module is an MIO module, which can be used with the board component's Analog and GPIO related apis.
 func (dev *SDeviceInfo) isMIO() bool {
 	return dev.i16uModuleType == 118
 }
