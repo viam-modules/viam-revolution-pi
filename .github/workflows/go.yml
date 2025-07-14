@@ -116,7 +116,7 @@ jobs:
       with:
         name: ${{ env.binary_file_name }}-${{ env.os }}-${{ env.GOARCH }}
     - name: Upload
-      uses: viamrobotics/upload-module@main
+      uses: viamrobotics/upload-module@v1
       with:
         module-path: ${{ env.binary_file_name }}-${{ env.os }}-${{ env.GOARCH }}.tar.gz
         platform: ${{ env.GOOS }}/${{ env.GOARCH }}
