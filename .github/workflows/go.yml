@@ -116,11 +116,11 @@ jobs:
       with:
         name: ${{ env.binary_file_name }}-${{ env.os }}-${{ env.GOARCH }}
     - name: Upload
-      uses: viamrobotics/upload-module@main
+      uses: viamrobotics/upload-module@v1
       with:
         module-path: ${{ env.binary_file_name }}-${{ env.os }}-${{ env.GOARCH }}.tar.gz
         platform: ${{ env.GOOS }}/${{ env.GOARCH }}
-        org-id: 6efeb7e5-91aa-4187-8ed3-e84764726078
+        org-id: e76d1b3b-0468-4efd-bb7f-fb1d2b352fcb
         version: ${{ github.event_name == 'release' && github.ref_name || format('0.0.0-{0}.{1}', github.ref_name, github.run_number) }} # <-- see 'Versioning' section below for explanation
         key-id: ${{ secrets.viam_key_id }}
         key-value: ${{ secrets.viam_key_value }}
