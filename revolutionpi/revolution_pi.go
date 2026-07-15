@@ -125,7 +125,7 @@ func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error)
 	return b.controlChip.GetGPIOPin(pinName)
 }
 
-func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration) error {
+func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration, extra map[string]interface{}) error {
 	return grpc.UnimplementedError
 }
 
