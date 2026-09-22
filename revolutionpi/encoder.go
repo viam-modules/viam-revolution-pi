@@ -42,11 +42,11 @@ func init() {
 }
 
 // Validate validates the EncoderConfig.
-func (cfg *EncoderConfig) Validate(path string) ([]string, error) {
+func (cfg *EncoderConfig) Validate(path string) ([]string, []string, error) {
 	if cfg.Name == "" {
-		return nil, utils.NewConfigValidationFieldRequiredError(path, "pin_name")
+		return nil, nil, utils.NewConfigValidationFieldRequiredError(path, "pin_name")
 	}
-	return []string{}, nil
+	return []string{}, nil, nil
 }
 
 func newEncoder(
