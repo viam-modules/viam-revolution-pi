@@ -5,7 +5,8 @@ package revolutionpi
 
 func ioctlAddress(v int) int {
 	kbIocMagic := int('K')
-	magic := (((0) << (((0 + 8) + 8) + 14)) | ((kbIocMagic) << (0 + 8)) | ((v) << 0) | ((0) << ((0 + 8) + 8)))
+	magic := ((0 << (((0 + 8) + 8) + 14)) | (kbIocMagic << (0 + 8)) | (v << 0) | (0 << ((0 + 8) + 8)))
+
 	return magic
 }
 
@@ -99,48 +100,48 @@ func (dev *SDeviceInfo) isMIO() bool {
 
 // getModuleName gets the module name based on the module type.
 func getModuleName(moduleType uint16) string {
-	switch {
-	case moduleType == 95:
+	switch moduleType {
+	case 95:
 		return "RevPi Core"
-	case moduleType == 96:
+	case 96:
 		return "RevPi DIO"
-	case moduleType == 97:
+	case 97:
 		return "RevPi DI"
-	case moduleType == 98:
+	case 98:
 		return "RevPi DO"
-	case moduleType == 103:
+	case 103:
 		return "RevPi AIO"
-	case moduleType == 118:
+	case 118:
 		return "RevPi MIO"
-	case moduleType == 136:
+	case 136:
 		return "RevPi Connect 4"
-	case moduleType == 0x6001:
+	case 0x6001:
 		return "ModbusTCP Slave Adapter"
-	case moduleType == 0x6002:
+	case 0x6002:
 		return "ModbusRTU Slave Adapter"
-	case moduleType == 0x6003:
+	case 0x6003:
 		return "ModbusTCP Master Adapter"
-	case moduleType == 0x6004:
+	case 0x6004:
 		return "ModbusRTU Master Adapter"
-	case moduleType == 100:
+	case 100:
 		return "Gateway DMX"
-	case moduleType == 71:
+	case 71:
 		return "Gateway CANopen"
-	case moduleType == 73:
+	case 73:
 		return "Gateway DeviceNet"
-	case moduleType == 74:
+	case 74:
 		return "Gateway EtherCAT"
-	case moduleType == 75:
+	case 75:
 		return "Gateway EtherNet/IP"
-	case moduleType == 93:
+	case 93:
 		return "Gateway ModbusTCP"
-	case moduleType == 76:
+	case 76:
 		return "Gateway Powerlink"
-	case moduleType == 77:
+	case 77:
 		return "Gateway Profibus"
-	case moduleType == 79:
+	case 79:
 		return "Gateway Profinet IRT"
-	case moduleType == 81:
+	case 81:
 		return "Gateway SercosIII"
 	default:
 		return "unknown moduletype"

@@ -43,6 +43,7 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 		length: pin.i16uLength, bitPosition: pin.i8uBit, controlChip: g,
 	}
 	g.logger.Debugf("setting up digital interrupt pin: %v", di)
+
 	dio, err := findDevice(di.address, g.dioDevices)
 	if err != nil {
 		return &counterPin{}, err
@@ -66,6 +67,7 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 		if di.address > di.inputOffset { // This is the second set of input pins, so move the offset over
 			addressInputMode += 8
 		}
+
 		di.interruptAddress = di.inputOffset + inputWordToCounterOffset + addressInputMode*4
 	default:
 		return &counterPin{}, errors.New("pin is not a digital input pin")
@@ -77,9 +79,11 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 	if err != nil {
 		return &counterPin{}, err
 	}
+
 	if n != 1 {
 		return &counterPin{}, errors.New("unable to read digital input pin configuration")
 	}
+
 	di.controlChip.logger.Debugf("Current Pin configuration: %#d", b)
 
 	// check if the pin is configured as a counter
@@ -95,11 +99,12 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 	return &di, nil
 }
 
-func (di *diWrapper) Value(ctx context.Context, extra map[string]interface{}) (int64, error) {
+func (di *diWrapper) Value(ctx context.Context, extra map[string]any) (int64, error) {
 	val, err := di.pin.Value()
 	if err != nil {
 		return 0, err
 	}
+
 	return int64(val), nil
 }
 
@@ -108,17 +113,24 @@ func (di *counterPin) Value() (uint32, error) {
 	if !di.enabled {
 		return 0, fmt.Errorf("cannot get digital interrupt value, pin %s is not configured as an interrupt", di.pinName)
 	}
+
 	di.controlChip.logger.Debugf("Reading from %d, length: 4 byte(s)", di.interruptAddress)
+
 	b := make([]byte, 4)
+
 	n, err := di.controlChip.fileHandle.ReadAt(b, int64(di.interruptAddress))
 	if err != nil {
 		return 0, err
 	}
+
 	di.controlChip.logger.Debugf("Read %#v bytes", b)
+
 	if n != 4 {
 		return 0, fmt.Errorf("expected 4 bytes, got %#v", b)
 	}
+
 	val := binary.LittleEndian.Uint32(b)
+
 	return val, nil
 }
 

@@ -35,6 +35,7 @@ type gpioPin struct {
 
 func (pin *gpioPin) initialize() error {
 	var err error
+
 	val := false
 
 	// for output gpio pins pwm can be enabled, so we should check for that
@@ -42,6 +43,7 @@ func (pin *gpioPin) initialize() error {
 		// if the normal gpio output is given, use the bit position to check if we are in pwm mode.
 		// We also need to determine which address to check.
 		pwmActiveAddress := int64(pin.Address - pin.outputOffset + pin.inputOffset + outputPWMActiveOffset)
+
 		val, err = pin.ControlChip.getBitValue(pwmActiveAddress, pin.BitPosition)
 		if err != nil {
 			return err
@@ -52,6 +54,7 @@ func (pin *gpioPin) initialize() error {
 		// Output pins start at pin.outputOffset+2, so we can subtract pin address by that amount to get the correct bit
 		pwmActiveBitPosition := uint8(pin.Address - pin.outputOffset - outputWordToPWMOffset) // between 0 and 16
 		pwmActiveAddress := int64(pin.inputOffset + outputPWMActiveOffset + uint16(pwmActiveBitPosition>>3))
+
 		val, err = pin.ControlChip.getBitValue(pwmActiveAddress, pwmActiveBitPosition%8)
 		if err != nil {
 			return err
@@ -62,6 +65,7 @@ func (pin *gpioPin) initialize() error {
 	pin.initialized = true
 
 	pin.ControlChip.logger.Debugf("Pin initialized: %#v", pin)
+
 	return nil
 }
 
@@ -71,7 +75,7 @@ func (pin *gpioPin) getPwmAddress() uint16 {
 	// The address for the Output Word pin is either 0 or 1 + outputOffset. Multiply by 7 to move to the correct address.
 	firstOrSecondHalf := 7 * (pin.Address - pin.outputOffset)
 	// the bit position then gets used to determine which PWM pin should be used
-	return pin.Address + outputWordToPWMOffset + firstOrSecondHalf + (uint16(pin.BitPosition))
+	return pin.Address + outputWordToPWMOffset + firstOrSecondHalf + uint16(pin.BitPosition)
 }
 
 // Get the memory address to use for modifying the pin state (on/off).
@@ -94,7 +98,7 @@ func (pin *gpioPin) getGpioAddress() uint16 {
 }
 
 // Set sets the state of the pin on or off.
-func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interface{}) error {
+func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]any) error {
 	if !pin.initialized {
 		return errors.New("pin not initialized")
 	}
@@ -131,14 +135,16 @@ func (pin *gpioPin) Set(ctx context.Context, high bool, extra map[string]interfa
 	if err != 0 {
 		return err
 	}
+
 	return nil
 }
 
 // Get gets the high/low state of the pin.
-func (pin *gpioPin) Get(ctx context.Context, extra map[string]interface{}) (bool, error) {
+func (pin *gpioPin) Get(ctx context.Context, extra map[string]any) (bool, error) {
 	if !pin.initialized {
 		return false, errors.New("pin not initialized")
 	}
+
 	if pin.pwmMode {
 		return false, fmt.Errorf("cannot get pin state, Pin %s is configured as PWM", pin.Name)
 	}
@@ -161,10 +167,11 @@ func (pin *gpioPin) Get(ctx context.Context, extra map[string]interface{}) (bool
 }
 
 // PWM gets the pin's given duty cycle.
-func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (float64, error) {
+func (pin *gpioPin) PWM(ctx context.Context, extra map[string]any) (float64, error) {
 	if !pin.initialized {
 		return 0, errors.New("pin not initialized")
 	}
+
 	if !pin.isOutputPWM() && !pin.isDigitalOutput() {
 		return 0, fmt.Errorf("cannot get PWM, Pin %s is not a PWM pin", pin.Name)
 	}
@@ -182,25 +189,31 @@ func (pin *gpioPin) PWM(ctx context.Context, extra map[string]interface{}) (floa
 	b := make([]byte, 2)
 	n, err := pin.ControlChip.fileHandle.ReadAt(b, int64(pwmAddress))
 	pin.ControlChip.logger.Debugf("Read %#d bytes", b)
+
 	if n != 2 {
 		return 0, fmt.Errorf("expected 2 bytes, got %#v", b)
 	}
+
 	if err != nil {
 		return 0, err
 	}
+
 	b[1] = 0x00
+
 	val := binary.LittleEndian.Uint16(b)
 	if val > 100 {
 		pin.ControlChip.logger.Warn("got PWM duty cycle greater than 100")
 	}
+
 	return float64(val) / 100, nil
 }
 
 // SetPWM sets the pin to the given duty cycle.
-func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[string]interface{}) error {
+func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[string]any) error {
 	if !pin.initialized {
 		return errors.New("pin not initialized")
 	}
+
 	if !pin.isOutputPWM() && !pin.isDigitalOutput() {
 		return fmt.Errorf("cannot set PWM, Pin %s is not a PWM pin", pin.Name)
 	}
@@ -216,6 +229,7 @@ func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[
 		// Should we clamp or error?
 		return errors.New("cannot set duty cycle greater than 100%")
 	}
+
 	if dutyCyclePct < 0 {
 		return errors.New("cannot set duty cycle less than 0%")
 	}
@@ -229,14 +243,16 @@ func (pin *gpioPin) SetPWM(ctx context.Context, dutyCyclePct float64, extra map[
 	binary.LittleEndian.PutUint16(b, uint16(dutyCyclePct))
 	b = b[:1]
 	err := pin.ControlChip.writeValue(int64(pwmAddress), b)
+
 	return err
 }
 
 // PWMFreq gets the PWM frequency of the pin.
-func (pin *gpioPin) PWMFreq(ctx context.Context, extra map[string]interface{}) (uint, error) {
+func (pin *gpioPin) PWMFreq(ctx context.Context, extra map[string]any) (uint, error) {
 	if !pin.initialized {
 		return 0, errors.New("pin not initialized")
 	}
+
 	if !pin.isOutputPWM() && !pin.isDigitalOutput() {
 		return 0, fmt.Errorf("cannot get PWM Frequency, Pin %s is not a PWM pin", pin.Name)
 	}
@@ -247,9 +263,11 @@ func (pin *gpioPin) PWMFreq(ctx context.Context, extra map[string]interface{}) (
 	if err != nil {
 		return 0, err
 	}
+
 	if n != 1 {
 		return 0, errors.New("unable to read PWM Frequency")
 	}
+
 	pin.ControlChip.logger.Debugf("Current frequency step size: %#d", b)
 
 	return stepSizeToFreq(b), nil
@@ -271,11 +289,12 @@ func stepSizeToFreq(step []byte) uint {
 	case 10:
 		return 400
 	}
+
 	return 0
 }
 
 // SetPWMFreq sets the given pin to the given PWM frequency. For the Rev-Pi this must be configured in PiCtory.
-func (pin *gpioPin) SetPWMFreq(ctx context.Context, freqHz uint, extra map[string]interface{}) error {
+func (pin *gpioPin) SetPWMFreq(ctx context.Context, freqHz uint, extra map[string]any) error {
 	if !pin.initialized {
 		return errors.New("pin not initialized")
 	}
