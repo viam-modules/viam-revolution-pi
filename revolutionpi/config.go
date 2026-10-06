@@ -14,5 +14,6 @@ var Model = resource.NewModel("viam", "kunbus", "revolutionpi")
 // Config is the config for the rev-pi board.
 type Config struct {
 	resource.TriviallyValidateConfig
+
 	Attributes utils.AttributeMap `json:"attributes,omitempty"`
 }

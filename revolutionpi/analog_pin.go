@@ -34,6 +34,7 @@ type analogInfo struct {
 
 func initializeAnalogPin(pin SPIVariable, g *gpioChip) (*analogPin, error) {
 	analogPin := analogPin{Name: str32(pin.strVarName), Address: pin.i16uAddress, Length: pin.i16uLength, ControlChip: g}
+
 	aio, err := findDevice(analogPin.Address, g.aioDevices)
 	if err != nil {
 		analogPin.ControlChip.logger.Debug("pin is not from a supported GPIO board")
@@ -48,13 +49,16 @@ func initializeAnalogPin(pin SPIVariable, g *gpioChip) (*analogPin, error) {
 		analogInputNumber := (analogPin.Address - analogPin.inputOffset) / 2                     // results in 0, 1, 2, or 3
 		inputRangeAddress := analogInputNumber*7 + analogInputMemAddress + analogPin.inputOffset // results in pin 24, 31, 38, or 45
 		bufInputRange := make([]byte, 1)
+
 		n, err := analogPin.ControlChip.fileHandle.ReadAt(bufInputRange, int64(inputRangeAddress))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read input range for analog pin %s", analogPin.Name)
 		}
+
 		if n != 1 {
 			return nil, fmt.Errorf("expected 1 byte, got %#v", bufInputRange)
 		}
+
 		analogPin.info, err = getAnalogInputRange(bufInputRange[0])
 		if err != nil {
 			return nil, err
@@ -66,42 +70,53 @@ func initializeAnalogPin(pin SPIVariable, g *gpioChip) (*analogPin, error) {
 		if analogPin.Address == analogPin.outputOffset+2 {
 			outputRangeAddress = analogPin.inputOffset + 79
 		}
+
 		bufOutputRange := make([]byte, 1)
+
 		n, err := analogPin.ControlChip.fileHandle.ReadAt(bufOutputRange, int64(outputRangeAddress))
 		if err != nil {
 			return nil, err
 		}
+
 		if n != 1 {
 			return nil, fmt.Errorf("unable to determine if pin %s is configured for analog write", analogPin.Name)
 		}
+
 		analogPin.ControlChip.logger.Debugf("outputRange Value: %d", bufOutputRange)
+
 		analogPin.info, err = getAnalogOutputRange(bufOutputRange[0], analogPin.Name)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	return &analogPin, nil
 }
 
-func (pin *analogPin) Read(ctx context.Context, extra map[string]interface{}) (board.AnalogValue, error) {
+func (pin *analogPin) Read(ctx context.Context, extra map[string]any) (board.AnalogValue, error) {
 	if !pin.isAnalogInput() {
 		return board.AnalogValue{}, fmt.Errorf("cannot ReadAnalog, pin %s is not an analog input pin", pin.Name)
 	}
+
 	pin.ControlChip.logger.Debugf("Reading from %v, length: %v byte(s)", pin.Address, pin.Length/8)
 	b := make([]byte, pin.Length/8)
 	n, err := pin.ControlChip.fileHandle.ReadAt(b, int64(pin.Address))
 	pin.ControlChip.logger.Debugf("Read %#v bytes", b)
+
 	if n != 2 {
 		return board.AnalogValue{}, fmt.Errorf("expected 2 bytes, got %#v", b)
 	}
+
 	if err != nil {
 		return board.AnalogValue{}, err
 	}
+
 	val := binary.LittleEndian.Uint16(b)
 	// NOTE: we currently assume that the input multiplier, divisor, and offset have not been modified
 	// the min and max values will change if a user modifies these.
 	// step size converts mV -> V and micro Amps -> mA
 	analogVal := board.AnalogValue{Value: int(val), Min: float32(pin.info.min), Max: float32(pin.info.max), StepSize: 0.001}
+
 	return analogVal, nil
 }
 
@@ -110,8 +125,9 @@ func (pin *analogPin) Close(ctx context.Context) error {
 	return nil
 }
 
-func (pin *analogPin) Write(ctx context.Context, value int, extra map[string]interface{}) error {
+func (pin *analogPin) Write(ctx context.Context, value int, extra map[string]any) error {
 	pin.ControlChip.logger.Debugf("Analog: %#v", pin)
+
 	if !pin.isAnalogOutput() {
 		return fmt.Errorf("cannot Write to Analog, pin %s is not an analog output pin", pin.Name)
 	}
@@ -123,10 +139,12 @@ func (pin *analogPin) Write(ctx context.Context, value int, extra map[string]int
 	}
 
 	buf := new(bytes.Buffer)
+
 	err := binary.Write(buf, binary.LittleEndian, int32(value))
 	if err != nil {
 		return err
 	}
+
 	return pin.ControlChip.writeValue(int64(pin.Address), buf.Bytes())
 }
 

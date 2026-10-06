@@ -42,7 +42,8 @@ func init() {
 	resource.RegisterComponent(
 		board.API,
 		Model,
-		resource.Registration[board.Board, *Config]{Constructor: newBoard})
+		resource.Registration[board.Board, *Config]{Constructor: newBoard},
+	)
 }
 
 func newBoard(
@@ -55,11 +56,13 @@ func newBoard(
 
 	devPath := filepath.Join("/dev", "piControl0")
 	devPath = filepath.Clean(devPath)
+
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return nil, err
 	}
+
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 	gpioChip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
 	b := revolutionPiBoard{
@@ -83,7 +86,7 @@ func newBoard(
 
 // StreamTicks starts a stream of digital interrupt ticks. The rev pi does not support this feature.
 func (b *revolutionPiBoard) StreamTicks(ctx context.Context, interrupts []board.DigitalInterrupt,
-	ch chan board.Tick, extra map[string]interface{},
+	ch chan board.Tick, extra map[string]any,
 ) error {
 	return grpc.UnimplementedError
 }
@@ -94,7 +97,9 @@ func (b *revolutionPiBoard) AnalogByName(name string) (board.Analog, error) {
 		b.logger.Error(err)
 		return nil, err
 	}
+
 	b.logger.Debugf("Analog Pin: %#v", pin)
+
 	return pin, nil
 }
 
@@ -105,7 +110,9 @@ func (b *revolutionPiBoard) DigitalInterruptByName(name string) (board.DigitalIn
 		b.logger.Error(err)
 		return nil, err
 	}
+
 	b.logger.Debugf("Interrupt Pin: %#v", interrupt)
+
 	return &diWrapper{pin: interrupt}, nil
 }
 
@@ -125,28 +132,33 @@ func (b *revolutionPiBoard) GPIOPinByName(pinName string) (board.GPIOPin, error)
 	return b.controlChip.GetGPIOPin(pinName)
 }
 
-func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration, extra map[string]interface{}) error {
+func (b *revolutionPiBoard) SetPowerMode(ctx context.Context, mode pb.PowerMode, duration *time.Duration, extra map[string]any) error {
 	return grpc.UnimplementedError
 }
 
 func (b *revolutionPiBoard) Close(ctx context.Context) error {
 	b.mu.Lock()
+
 	b.logger.Info("Closing RevPi board.")
 	defer b.mu.Unlock()
+
 	b.cancelFunc()
+
 	err := b.controlChip.Close()
 	if err != nil {
 		return err
 	}
+
 	b.activeBackgroundWorkers.Wait()
 	b.logger.Info("Board closed.")
+
 	return nil
 }
 
 func (b *revolutionPiBoard) DoCommand(ctx context.Context,
-	req map[string]interface{},
-) (map[string]interface{}, error) {
-	resp := make(map[string]interface{})
+	req map[string]any,
+) (map[string]any, error) {
+	resp := make(map[string]any)
 
 	pinMessage, exists := req[readParameterKey]
 	if exists {
@@ -154,12 +166,16 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 		if !ok {
 			return nil, fmt.Errorf("error performing %s: expected string got %v", readParameterKey, pinMessage)
 		}
+
 		pin := SPIVariable{strVarName: char32(pinName)}
+
 		err := b.controlChip.mapNameToAddress(&pin)
 		if err != nil {
 			return nil, err
 		}
+
 		b.controlChip.logger.Debugf("reading pin: %#v", pin)
+
 		switch pin.i16uLength {
 		case 1:
 			// the length of the variable is 1, so we want to read from a specific bit at the address
@@ -167,21 +183,26 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 			if err != nil {
 				return nil, err
 			}
+
 			resp[pinName] = value
 		default:
 			// the length of the variable is more than 1, so we want to read a set of bytes from the address
 			value := make([]byte, pin.i16uLength/8)
+
 			n, err := b.controlChip.fileHandle.ReadAt(value, int64(pin.i16uAddress))
 			if err != nil {
 				return nil, err
 			}
+
 			b.controlChip.logger.Debugf("Read %#d bytes", n)
+
 			resp[pinName], err = readFromBuffer(value, n)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
+
 	if !exists {
 		return nil, fmt.Errorf("no valid commands found, got %#v", req)
 	}

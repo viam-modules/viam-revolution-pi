@@ -22,6 +22,7 @@ import (
 type revolutionPiEncoder struct {
 	resource.Named
 	resource.AlwaysRebuild
+
 	pin     *counterPin
 	zeroPos atomic.Int32
 }
@@ -38,7 +39,8 @@ func init() {
 	resource.RegisterComponent(
 		encoder.API,
 		EncoderModel,
-		resource.Registration[encoder.Encoder, *EncoderConfig]{Constructor: newEncoder})
+		resource.Registration[encoder.Encoder, *EncoderConfig]{Constructor: newEncoder},
+	)
 }
 
 // Validate validates the EncoderConfig.
@@ -46,6 +48,7 @@ func (cfg *EncoderConfig) Validate(path string) ([]string, []string, error) {
 	if cfg.Name == "" {
 		return nil, nil, utils.NewConfigValidationFieldRequiredError(path, "pin_name")
 	}
+
 	return []string{}, nil, nil
 }
 
@@ -59,20 +62,25 @@ func newEncoder(
 	if err != nil {
 		return nil, err
 	}
+
 	devPath := filepath.Clean(filepath.Join("/dev", "piControl0"))
+
 	fd, err := os.OpenFile(devPath, os.O_RDWR, fs.FileMode(os.O_RDWR))
 	if err != nil {
 		err = fmt.Errorf("open chip %v failed: %w", devPath, err)
 		return nil, err
 	}
+
 	chip := gpioChip{dev: devPath, logger: logger, fileHandle: fd}
 
 	err = chip.showDeviceList()
 	if err != nil {
 		return nil, err
 	}
+
 	name := svcConfig.Name
 	pin := SPIVariable{strVarName: char32(name)}
+
 	err = chip.mapNameToAddress(&pin)
 	if err != nil {
 		return nil, err
@@ -87,7 +95,7 @@ func newEncoder(
 }
 
 func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encoder.PositionType,
-	extra map[string]interface{},
+	extra map[string]any,
 ) (float64, encoder.PositionType, error) {
 	pos, err := enc.pin.Value()
 	if err != nil {
@@ -100,20 +108,22 @@ func (enc *revolutionPiEncoder) Position(ctx context.Context, positionType encod
 	return float64(signedPos), encoder.PositionTypeTicks, nil
 }
 
-func (enc *revolutionPiEncoder) ResetPosition(ctx context.Context, extra map[string]interface{}) error {
+func (enc *revolutionPiEncoder) ResetPosition(ctx context.Context, extra map[string]any) error {
 	pos, err := enc.pin.Value()
 	if err != nil {
 		return err
 	}
+
 	enc.zeroPos.Store(int32(pos))
+
 	return nil
 }
 
-func (enc *revolutionPiEncoder) Properties(ctx context.Context, extra map[string]interface{}) (encoder.Properties, error) {
+func (enc *revolutionPiEncoder) Properties(ctx context.Context, extra map[string]any) (encoder.Properties, error) {
 	return encoder.Properties{TicksCountSupported: true, AngleDegreesSupported: false}, nil
 }
 
-func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]interface{}) (map[string]interface{}, error) {
+func (enc *revolutionPiEncoder) DoCommand(ctx context.Context, req map[string]any) (map[string]any, error) {
 	return nil, grpc.UnimplementedError
 }
 

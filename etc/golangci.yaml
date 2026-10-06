@@ -1,122 +1,115 @@
-service:
-  golangci-lint-version: 1.51.x
+version: "2"
 run:
-  deadline: 900s
+  timeout: 900s
   modules-download-mode: readonly
-  skip-dirs-use-default: false
   tests: true
 linters:
-  enable-all: true
+  default: all
   disable:
     - asasalint
     - containedctx
     - contextcheck
     - cyclop
-    - deadcode
     - depguard
-    - exhaustivestruct
     - exhaustruct
     - forcetypeassert
     - funlen
     - gocognit
     - godox
-    - goerr113
+    - err113
+    - exhaustruct_v5
+    - funcorder
     - gochecknoglobals
     - gochecknoinits
     - gocyclo
-    - gofmt
-    - goimports
-    - golint
-    - gomnd
-    - ifshort
+    - godoclint
     - importas
     - interfacebloat
-    - interfacer
     - ireturn
     - maintidx
-    - maligned
     - makezero
+    - mnd
     - musttag
     - nakedret
     - nestif
     - nlreturn
-    - nosnakecase
     - nonamedreturns
     - nosprintfhostport
     - paralleltest
     - prealloc
-    - scopelint
-    - structcheck
     - tagliatelle
     - testpackage
-    - thelper # false positives
-    - varcheck
+    - thelper
     - varnamelen
     - wrapcheck
     - wsl
-linters-settings:
-  errcheck:
-    check-blank: true
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(viam-labs/viam-revolution-pi)
-  gofumpt:
-    lang-version: "1.21"
-    extra-rules: true
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-      - shadow
-      - composites
-  revive:
-    # Unfortunately configuring a single rules disables all other rules, even
-    # if we set `enable-all: true`
-    #
-    # To get around this, we include default rules:
-    # https://github.com/mgechev/revive/blob/master/defaults.toml
+    - wsl_v5
+  settings:
+    errcheck:
+      check-blank: true
+    gosec:
+      excludes:
+        - G115
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
+        - composites
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+          disabled: false
+          arguments:
+            - allowTypesBefore: "testing.TB,*testing.T,*testing.B,*testing.F"
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: exported
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: var-declaration
+        - name: var-naming
+    lll:
+      line-length: 140
+  exclusions:
     rules:
-      - name: blank-imports
-      - name: context-as-argument
-        disabled: false
-        arguments:
-          - allowTypesBefore: "testing.TB,*testing.T,*testing.B,*testing.F"
-      - name: context-keys-type
-      - name: dot-imports
-      - name: empty-block
-      - name: error-naming
-      - name: error-return
-      - name: error-strings
-      - name: errorf
-      - name: exported
-      - name: increment-decrement
-      - name: indent-error-flow
-      - name: package-comments
-      - name: range
-      - name: receiver-naming
-      - name: redefines-builtin-id
-      - name: superfluous-else
-      - name: time-naming
-      - name: unexported-return
-      - name: unreachable-code
-      - name: var-declaration
-      - name: var-naming
-  lll:
-    line-length: 140
+      - path: _test\.go$
+        linters:
+          - dupword
+          - errcheck
+          - exhaustive
+          - goconst
+          - gosec
+      - path: /doc.go$
+        linters:
+          - lll
+    generated: lax
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(viam-labs/viam-revolution-pi)
+    gofumpt:
+      extra-rules: true
 issues:
-  exclude-rules:
-    - path: _test\.go$
-      linters:
-        - dupword
-        - errcheck
-        - exhaustive
-        - goconst
-        - gosec
-    - path: /doc.go$
-      linters:
-        - lll
-  exclude-use-default: false
-  max-per-linter: 0
+  max-issues-per-linter: 0
   max-same-issues: 0

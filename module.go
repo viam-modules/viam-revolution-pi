@@ -11,7 +11,6 @@ import (
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/module"
 	"go.viam.com/utils"
-
 	"viam/viam-revolution-pi/revolutionpi"
 )
 
@@ -29,6 +28,7 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 	if err != nil {
 		return err
 	}
+
 	err = customModule.AddModelFromRegistry(ctx, encoder.API, revolutionpi.EncoderModel)
 	if err != nil {
 		return err
@@ -36,10 +36,12 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 
 	err = customModule.Start(ctx)
 	defer customModule.Close(ctx)
+
 	if err != nil {
 		return err
 	}
 
 	<-ctx.Done()
+
 	return nil
 }

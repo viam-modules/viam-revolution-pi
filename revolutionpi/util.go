@@ -10,21 +10,23 @@ import (
 
 func str32(chars [32]byte) string {
 	i := 0
+
 	var c byte
 	for i, c = range chars {
 		if c == 0 {
 			break
 		}
 	}
+
 	return string(chars[:i])
 }
 
 func char32(str string) (chars [32]byte) {
 	copy(chars[:31], str)
-	return
+	return chars
 }
 
-func readFromBuffer(buf []byte, size int) (interface{}, error) {
+func readFromBuffer(buf []byte, size int) (any, error) {
 	switch size {
 	case 1:
 		return buf[0], nil
