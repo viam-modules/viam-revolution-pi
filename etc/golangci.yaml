@@ -17,7 +17,6 @@ linters:
     - gocognit
     - godox
     - err113
-    - exhaustruct_v5
     - funcorder
     - gochecknoglobals
     - gochecknoinits
