@@ -188,7 +188,7 @@ func (pin *gpioPin) PWM(ctx context.Context, extra map[string]any) (float64, err
 
 	b := make([]byte, 2)
 	n, err := pin.ControlChip.fileHandle.ReadAt(b, int64(pwmAddress))
-	pin.ControlChip.logger.Debugf("Read %#d bytes", b)
+	pin.ControlChip.logger.Debugf("Read %#v bytes", b)
 
 	if n != 2 {
 		return 0, fmt.Errorf("expected 2 bytes, got %#v", b)
@@ -268,7 +268,7 @@ func (pin *gpioPin) PWMFreq(ctx context.Context, extra map[string]any) (uint, er
 		return 0, errors.New("unable to read PWM Frequency")
 	}
 
-	pin.ControlChip.logger.Debugf("Current frequency step size: %#d", b)
+	pin.ControlChip.logger.Debugf("Current frequency step size: %#v", b)
 
 	return stepSizeToFreq(b), nil
 }

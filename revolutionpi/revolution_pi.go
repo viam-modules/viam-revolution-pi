@@ -194,7 +194,7 @@ func (b *revolutionPiBoard) DoCommand(ctx context.Context,
 				return nil, err
 			}
 
-			b.controlChip.logger.Debugf("Read %#d bytes", n)
+			b.controlChip.logger.Debugf("Read %d bytes", n)
 
 			resp[pinName], err = readFromBuffer(value, n)
 			if err != nil {
