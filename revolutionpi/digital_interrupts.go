@@ -84,7 +84,7 @@ func initializeDigitalInterrupt(pin SPIVariable, g *gpioChip, isEncoder bool) (*
 		return &counterPin{}, errors.New("unable to read digital input pin configuration")
 	}
 
-	di.controlChip.logger.Debugf("Current Pin configuration: %#d", b)
+	di.controlChip.logger.Debugf("Current Pin configuration: %#v", b)
 
 	// check if the pin is configured as a counter
 	// b[0] == 0 means the interrupt is disabled, b[0] == 3 means the pin is configured for encoder mode
