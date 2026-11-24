@@ -3,7 +3,7 @@ TOOL_BIN = bin/gotools/$(shell uname -s)-$(shell uname -m)
 build: build-go
 
 build-go:
-	go build -tags osusergo,netgo -o viam-revolution-pi -v .
+	go build -tags no_cgo,osusergo,netgo -o viam-revolution-pi -v .
 
 tool-install:
 	GOBIN=`pwd`/$(TOOL_BIN) go install \
